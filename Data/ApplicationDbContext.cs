@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+﻿using aspnet_core_tutorial.Models;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -14,5 +15,7 @@ namespace aspnet_core_tutorial.Data
         {
 
         }
+
+        public DbSet<Category> categories { get; set; }
     }
 }
