@@ -22,7 +22,7 @@ namespace aspnet_core_tutorial.Controllers
         // GET: Categories
         public async Task<IActionResult> Index()
         {
-            return View(await _context.categories.ToListAsync());
+            return View(await _context.Categories.ToListAsync());
         }
 
         // GET: Categories/Details/5
@@ -33,7 +33,7 @@ namespace aspnet_core_tutorial.Controllers
                 return NotFound();
             }
 
-            var category = await _context.categories
+            var category = await _context.Categories
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (category == null)
             {
@@ -73,7 +73,7 @@ namespace aspnet_core_tutorial.Controllers
                 return NotFound();
             }
 
-            var category = await _context.categories.FindAsync(id);
+            var category = await _context.Categories.FindAsync(id);
             if (category == null)
             {
                 return NotFound();
@@ -124,7 +124,7 @@ namespace aspnet_core_tutorial.Controllers
                 return NotFound();
             }
 
-            var category = await _context.categories
+            var category = await _context.Categories
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (category == null)
             {
@@ -139,15 +139,15 @@ namespace aspnet_core_tutorial.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var category = await _context.categories.FindAsync(id);
-            _context.categories.Remove(category);
+            var category = await _context.Categories.FindAsync(id);
+            _context.Categories.Remove(category);
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
         private bool CategoryExists(int id)
         {
-            return _context.categories.Any(e => e.Id == id);
+            return _context.Categories.Any(e => e.Id == id);
         }
     }
 }

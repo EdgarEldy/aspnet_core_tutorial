@@ -31,7 +31,7 @@ namespace aspnet_core_tutorial.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("categories");
+                    b.ToTable("Categories");
                 });
 
             modelBuilder.Entity("aspnet_core_tutorial.Models.Product", b =>
