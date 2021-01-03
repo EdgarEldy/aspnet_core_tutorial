@@ -40,7 +40,7 @@ namespace aspnet_core_tutorial.Migrations
                         .ValueGeneratedOnAdd()
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-                    b.Property<int?>("CategoryId");
+                    b.Property<int>("CategoryId");
 
                     b.Property<string>("ProductName")
                         .IsRequired()
@@ -223,8 +223,9 @@ namespace aspnet_core_tutorial.Migrations
             modelBuilder.Entity("aspnet_core_tutorial.Models.Product", b =>
                 {
                     b.HasOne("aspnet_core_tutorial.Models.Category", "Category")
-                        .WithMany()
-                        .HasForeignKey("CategoryId");
+                        .WithMany("Products")
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Cascade);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
