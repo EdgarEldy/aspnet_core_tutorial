@@ -11,6 +11,7 @@ namespace aspnet_core_tutorial.Models
     {
         [Key]
         public int Id { get; set; }
+        public int CategoryId { get; set; }
         public Category Category { get; set; }
         [Column(TypeName ="varchar(255)")]
         [Required]
