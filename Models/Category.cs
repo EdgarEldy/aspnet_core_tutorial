@@ -14,5 +14,7 @@ namespace aspnet_core_tutorial.Models
         [Column(TypeName = "varchar(45)")]
         [Required]
         public string category_name { get; set; }
+
+        public List<Product> Products { get; set; }
     }
 }
