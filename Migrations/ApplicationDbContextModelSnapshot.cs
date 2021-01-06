@@ -34,6 +34,37 @@ namespace aspnet_core_tutorial.Migrations
                     b.ToTable("Categories");
                 });
 
+            modelBuilder.Entity("aspnet_core_tutorial.Models.Customer", b =>
+                {
+                    b.Property<int>("id")
+                        .ValueGeneratedOnAdd()
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<string>("Address")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<string>("LastName")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<string>("Tel")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.HasKey("id");
+
+                    b.ToTable("Customers");
+                });
+
             modelBuilder.Entity("aspnet_core_tutorial.Models.Product", b =>
                 {
                     b.Property<int>("Id")
