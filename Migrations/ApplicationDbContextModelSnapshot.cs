@@ -65,6 +65,29 @@ namespace aspnet_core_tutorial.Migrations
                     b.ToTable("Customers");
                 });
 
+            modelBuilder.Entity("aspnet_core_tutorial.Models.Order", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<int>("CustomerId");
+
+                    b.Property<int>("ProductId");
+
+                    b.Property<int>("Qty");
+
+                    b.Property<float>("total");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("ProductId");
+
+                    b.ToTable("Orders");
+                });
+
             modelBuilder.Entity("aspnet_core_tutorial.Models.Product", b =>
                 {
                     b.Property<int>("Id")
@@ -249,6 +272,19 @@ namespace aspnet_core_tutorial.Migrations
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("AspNetUserTokens");
+                });
+
+            modelBuilder.Entity("aspnet_core_tutorial.Models.Order", b =>
+                {
+                    b.HasOne("aspnet_core_tutorial.Models.Customer", "Customer")
+                        .WithMany("Orders")
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("aspnet_core_tutorial.Models.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade);
                 });
 
             modelBuilder.Entity("aspnet_core_tutorial.Models.Product", b =>
