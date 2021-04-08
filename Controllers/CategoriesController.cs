@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using aspnet_core_tutorial.Data;dddd
+using aspnet_core_tutorial.Data;
 using aspnet_core_tutorial.Models;
 
 namespace aspnet_core_tutorial.Controllers
