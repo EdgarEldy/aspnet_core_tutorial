@@ -34,6 +34,9 @@ namespace aspnet_core_tutorial.Models
         [Column(TypeName = "varchar(100)")]
         public string Address { get; set; } = string.Empty;
 
+        [Column(TypeName = "varchar(100)")]
+        public string Pays { get; set; } = string.Empty;
+
         public DateTime CreatedAt { get; set; }
 
         public DateTime UpdatedAt { get; set; }
