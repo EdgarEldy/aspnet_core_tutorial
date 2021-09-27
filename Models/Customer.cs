@@ -26,5 +26,7 @@ namespace aspnet_core_tutorial.Models
         [Column(TypeName = "varchar(255)")]
         [Required]
         public string Address { get; set; }
+
+        public string Pays { get; set; }
     }
 }
