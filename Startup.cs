@@ -62,6 +62,8 @@ namespace aspnet_core_tutorial
             app.UseStaticFiles();
             app.UseCookiePolicy();
 
+            app.UseRouting();
+
             app.UseAuthentication();
 
             app.UseEndpoints(endpoints =>
