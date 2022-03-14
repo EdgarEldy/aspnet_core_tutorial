@@ -1,19 +1,33 @@
 ﻿<div id="sidebar-collapse" class="col-sm-3 col-lg-2 sidebar">
     <ul class="nav menu">
-        <li class="active"><a asp-controller="Home" asp-action="Index"><svg class="glyph stroked dashboard-dial">
+        <li class="active">
+            <a asp-controller="Home" asp-action="Index">
+                <svg class="glyph stroked dashboard-dial">
                     <use xlink:href="#stroked-dashboard-dial"></use>
-                </svg> Accueil</a></li>
-        <li><a asp-controller="Orders" asp-action="Index"><svg class="glyph stroked calendar">
+                </svg> Accueil
+            </a>
+        </li>
+        <li>
+            <a asp-controller="Orders" asp-action="Index">
+                <svg class="glyph stroked calendar">
                     <use xlink:href="#stroked-calendar"></use>
-                </svg> Orders</a></li>
-        <li><a asp-controller="Customers" asp-action="Index"><svg class="glyph stroked clock">
+                </svg> Orders
+            </a>
+        </li>
+        <li>
+            <a asp-controller="Customers" asp-action="Index">
+                <svg class="glyph stroked clock">
                     <use xlink:href="#stroked-clock"></use>
-                </svg> Customers</a></li>
+                </svg> Customers
+            </a>
+        </li>
         <li class="parent">
             <a href="#">
-                <span data-toggle="collapse" href="#sub-item-1"><svg class="glyph stroked chevron-down">
+                <span data-toggle="collapse" href="#sub-item-1">
+                    <svg class="glyph stroked chevron-down">
                         <use xlink:href="#stroked-chevron-down"></use>
-                    </svg></span> Products
+                    </svg>
+                </span> Products
             </a>
             <ul class="children collapse" id="sub-item-1">
                 <li>
@@ -36,10 +50,42 @@
                 </li>
             </ul>
         </li>
-        <li><a href="#">
+        <li class="parent">
+            <a href="#">
+                <span data-toggle="collapse" href="#sub-item-2">
+                    <svg class="glyph stroked chevron-down">
+                        <use xlink:href="#stroked-chevron-down"></use>
+                    </svg>
+                </span> Access Control
+            </a>
+            <ul class="children collapse" id="sub-item-2">
+                <li>
+                    <a href="#">
+                        <svg class="glyph stroked chevron-right">
+                            <use xlink:href="#stroked-chevron-right">
+                            </use>
+                        </svg> Users
+                    </a>
+                </li>
+                <li>
+                    <a href="#">
+                        <svg class="glyph stroked chevron-right">
+                            <use xlink:href="#stroked-chevron-right">
+                            </use>
+                        </svg> Roles
+                    </a>
+                </li>
+                <li>
+                </li>
+            </ul>
+        </li>
+
+        <li>
+            <a href="#">
                 <svg class="glyph stroked male-user">
                     <use xlink:href="#stroked-cancel"></use>
-                </svg> Logout</a>
+                </svg> Logout
+            </a>
         </li>
     </ul>
 
