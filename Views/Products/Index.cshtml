@@ -1,0 +1,60 @@
+﻿@model IEnumerable<aspnet_core_tutorial.Models.Product>
+
+@{
+    ViewData["Title"] = "Index";
+    Layout = "~/Views/Layouts/_Default.cshtml";
+}
+
+<div class="col-lg-12">
+    <div class="panel panel-default">
+        <div class="panel-heading">Products List</div>
+        <div class="panel-body">
+            <a asp-action="Create" class="btn btn-primary">New</a>
+            <table data-toggle="table" data-url="" data-show-refresh="true" data-show-toggle="true"
+                   data-show-columns="true" data-search="true" data-select-item-name="toolbar1" data-pagination="true"
+                   data-sort-name="name" data-sort-order="desc">
+                <thead>
+                    <tr>
+                        <th>
+                            #
+                        </th>
+                        <th>
+                            Category Name
+                        </th>
+                        <th>
+                            Product Name
+                        </th>
+                        <th>
+                            Unit Price
+                        </th>
+                        <th>Options</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.Id)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.Category.category_name)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.ProductName)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.UnitPrice)
+                            </td>
+                            <td>
+                                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
+                                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
+                                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
