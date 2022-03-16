@@ -9,9 +9,9 @@
         <div class="panel-heading">Product categories</div>
         <div class="panel-body">
             <a asp-action="Create" class="btn btn-primary">New</a>
-            <table data-toggle="table" data-url=""  data-show-refresh="true" data-show-toggle="true"
-                       data-show-columns="true" data-search="true" data-select-item-name="toolbar1" data-pagination="true"
-                       data-sort-name="name" data-sort-order="desc">
+            <table data-toggle="table" data-url="" data-show-refresh="true" data-show-toggle="true"
+                   data-show-columns="true" data-search="true" data-select-item-name="toolbar1" data-pagination="true"
+                   data-sort-name="name" data-sort-order="desc">
                 <thead>
                     <tr>
                         <th>Id</th>
@@ -22,19 +22,19 @@
                 <tbody>
                     @foreach (var item in Model)
                     {
-                        <tr>
-                            <td>
-                                @Html.DisplayFor(modelItem => item.Id)
-                            </td>
-                            <td>
-                                @Html.DisplayFor(modelItem => item.category_name)
-                            </td>
-                            <td>
-                                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
-                                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
-                            </td>
-                        </tr>
+                    <tr>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.Id)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.category_name)
+                        </td>
+                        <td>
+                            <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
+                            <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
+                            <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
+                        </td>
+                    </tr>
                     }
                 </tbody>
             </table>
