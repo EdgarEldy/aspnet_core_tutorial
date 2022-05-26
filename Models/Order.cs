@@ -13,8 +13,8 @@ namespace aspnet_core_tutorial.Models
         public int CustomerId { get; set; }
         public int ProductId { get; set; }
         public int Qty { get; set; }
-        public float total { get; set; }
-
+        
+        public double Total { get; set; }
         public Customer Customer { get; set; }
         public Product Product { get; set; }
     }
