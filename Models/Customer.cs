@@ -10,7 +10,7 @@ namespace aspnet_core_tutorial.Models
     public class Customer
     {
         [Key]
-        public int id { get; set; }
+        public int Id { get; set; }
         [Column(TypeName = "varchar(255)")]
         [Required]
         public string FirstName { get; set; }
