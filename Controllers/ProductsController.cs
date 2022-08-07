@@ -48,7 +48,7 @@ namespace aspnet_core_tutorial.Controllers
         // GET: Products/Create
         public IActionResult Create()
         {
-            ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "category_name");
+            ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "CategoryName");
             return View();
         }
 
@@ -65,7 +65,7 @@ namespace aspnet_core_tutorial.Controllers
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "category_name", product.CategoryId);
+            ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "CategoryName", product.CategoryId);
             return View(product);
         }
 
@@ -82,7 +82,7 @@ namespace aspnet_core_tutorial.Controllers
             {
                 return NotFound();
             }
-            ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "category_name", product.CategoryId);
+            ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "CategoryName", product.CategoryId);
             return View(product);
         }
 
@@ -118,7 +118,7 @@ namespace aspnet_core_tutorial.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "category_name", product.CategoryId);
+            ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "CategoryName", product.CategoryId);
             return View(product);
         }
 
