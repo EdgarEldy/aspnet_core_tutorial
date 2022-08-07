@@ -13,7 +13,7 @@ namespace aspnet_core_tutorial.Models
         public int Id { get; set; }
         [Column(TypeName = "varchar(45)")]
         [Required]
-        public string category_name { get; set; }
+        public string CategoryName { get; set; }
 
         public List<Product> Products { get; set; }
     }
