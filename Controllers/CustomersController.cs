@@ -34,7 +34,7 @@ namespace aspnet_core_tutorial.Controllers
             }
 
             var customer = await _context.Customers
-                .FirstOrDefaultAsync(m => m.id == id);
+                .FirstOrDefaultAsync(m => m.Id == id);
             if (customer == null)
             {
                 return NotFound();
@@ -54,7 +54,7 @@ namespace aspnet_core_tutorial.Controllers
         // more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("id,FirstName,LastName,Email,Tel,Address")] Customer customer)
+        public async Task<IActionResult> Create([Bind("Id,FirstName,LastName,Email,Tel,Address")] Customer customer)
         {
             if (ModelState.IsValid)
             {
@@ -86,9 +86,9 @@ namespace aspnet_core_tutorial.Controllers
         // more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("id,FirstName,LastName,Email,Tel,Address")] Customer customer)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,FirstName,LastName,Email,Tel,Address")] Customer customer)
         {
-            if (id != customer.id)
+            if (id != customer.Id)
             {
                 return NotFound();
             }
@@ -102,7 +102,7 @@ namespace aspnet_core_tutorial.Controllers
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!CustomerExists(customer.id))
+                    if (!CustomerExists(customer.Id))
                     {
                         return NotFound();
                     }
@@ -125,7 +125,7 @@ namespace aspnet_core_tutorial.Controllers
             }
 
             var customer = await _context.Customers
-                .FirstOrDefaultAsync(m => m.id == id);
+                .FirstOrDefaultAsync(m => m.Id == id);
             if (customer == null)
             {
                 return NotFound();
@@ -147,7 +147,7 @@ namespace aspnet_core_tutorial.Controllers
 
         private bool CustomerExists(int id)
         {
-            return _context.Customers.Any(e => e.id == id);
+            return _context.Customers.Any(e => e.Id == id);
         }
     }
 }
