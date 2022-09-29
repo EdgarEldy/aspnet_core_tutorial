@@ -38,6 +38,11 @@
     <_ContentIncludedByDefault Remove="Views\Products\Details.cshtml" />
     <_ContentIncludedByDefault Remove="Views\Products\Edit.cshtml" />
     <_ContentIncludedByDefault Remove="Views\Products\Index.cshtml" />
+    <_ContentIncludedByDefault Remove="Views\Customers\Create.cshtml" />
+    <_ContentIncludedByDefault Remove="Views\Customers\Delete.cshtml" />
+    <_ContentIncludedByDefault Remove="Views\Customers\Details.cshtml" />
+    <_ContentIncludedByDefault Remove="Views\Customers\Edit.cshtml" />
+    <_ContentIncludedByDefault Remove="Views\Customers\Index.cshtml" />
   </ItemGroup>
 
 </Project>
