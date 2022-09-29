@@ -43,6 +43,11 @@
     <_ContentIncludedByDefault Remove="Views\Customers\Details.cshtml" />
     <_ContentIncludedByDefault Remove="Views\Customers\Edit.cshtml" />
     <_ContentIncludedByDefault Remove="Views\Customers\Index.cshtml" />
+    <_ContentIncludedByDefault Remove="Views\Orders\Create.cshtml" />
+    <_ContentIncludedByDefault Remove="Views\Orders\Delete.cshtml" />
+    <_ContentIncludedByDefault Remove="Views\Orders\Details.cshtml" />
+    <_ContentIncludedByDefault Remove="Views\Orders\Edit.cshtml" />
+    <_ContentIncludedByDefault Remove="Views\Orders\Index.cshtml" />
   </ItemGroup>
 
 </Project>
