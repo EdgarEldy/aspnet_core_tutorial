@@ -26,5 +26,8 @@ namespace aspnet_core_tutorial.Models
         public DateTime? CreatedAt { get; set; }
 
         public DateTime? UpdatedAt { get; set; }
+
+        // Add relationship to Customer Model
+        public virtual Customer Customer { get; set; }
     }
 }
