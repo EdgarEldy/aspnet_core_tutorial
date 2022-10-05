@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace aspnet_core_tutorial.Models
@@ -27,5 +28,8 @@ namespace aspnet_core_tutorial.Models
 
         // Add relationship to Category Model
         public virtual Category Category { get; set; }
+
+        // Add relationship to Order Model
+        public virtual ICollection<Order> Orders { get; set; }
     }
 }
