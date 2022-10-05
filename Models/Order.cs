@@ -29,5 +29,8 @@ namespace aspnet_core_tutorial.Models
 
         // Add relationship to Customer Model
         public virtual Customer Customer { get; set; }
+
+        // Add relationship to Product Model
+        public virtual Product Product { get; set; }
     }
 }
