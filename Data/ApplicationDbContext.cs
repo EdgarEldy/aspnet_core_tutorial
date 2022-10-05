@@ -15,5 +15,8 @@ namespace aspnet_core_tutorial.Data
         {
 
         }
+
+        // Categories DbSet
+        public DbSet<Category> Categories { get; set; }
     }
 }
