@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace aspnet_core_tutorial.Models
@@ -8,7 +9,7 @@ namespace aspnet_core_tutorial.Models
         // Constructor
         public Category()
         {
-            
+            this.Products = new HashSet<Product>();
         }
 
         // Properties goes here
@@ -20,5 +21,8 @@ namespace aspnet_core_tutorial.Models
         public DateTime? CreatedAt { get; set; }
 
         public DateTime? UpdatedAt { get; set; }
+
+        // Add relationship to Product Model
+        public virtual ICollection<Product> Products { get; set; }
     }
 }

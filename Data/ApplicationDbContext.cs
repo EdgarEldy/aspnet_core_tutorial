@@ -15,5 +15,17 @@ namespace aspnet_core_tutorial.Data
         {
 
         }
+
+        // Categories DbSet
+        public DbSet<Category> Categories { get; set; }
+
+        // Products DbSet
+        public DbSet<Product> Products { get; set; }
+
+        // Customers DbSet
+        public DbSet<Customer> Customers { get; set; }
+
+        // Orders DbSet
+        public DbSet<Order> Orders { get; set; }
     }
 }
