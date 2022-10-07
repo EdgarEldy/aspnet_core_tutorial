@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace aspnet_core_tutorial.Models
@@ -8,7 +10,7 @@ namespace aspnet_core_tutorial.Models
         // Constructor
         public Customer()
         {
-            
+            this.Orders = new HashSet<Order>();
         }
         
         // Customer properties goes here..
@@ -28,5 +30,8 @@ namespace aspnet_core_tutorial.Models
         public DateTime? CreatedAt { get; set; }
 
         public DateTime? UpdatedAt { get; set; }
+
+        // Add relationship to Order Model
+        public ICollection<Order> Orders { get; set; }
     }
 }
