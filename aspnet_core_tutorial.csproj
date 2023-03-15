@@ -8,4 +8,8 @@
     <Folder Include="Areas\Identity\Services\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="5.0.17" />
+  </ItemGroup>
+
 </Project>
