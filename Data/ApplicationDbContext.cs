@@ -16,9 +16,6 @@ namespace aspnet_core_tutorial.Data
 
         }
 
-        // Customers DbSet
-        public DbSet<Customer> Customers { get; set; }
-
         // Orders DbSet
         public DbSet<Order> Orders { get; set; }
     }
