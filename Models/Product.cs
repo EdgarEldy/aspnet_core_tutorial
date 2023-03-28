@@ -9,7 +9,7 @@ namespace aspnet_core_tutorial.Models
         // Constructor
         public Product()
         {
-            
+            this.Orders = new HashSet<Order>();
         }
         
         // Product properties goes here..
