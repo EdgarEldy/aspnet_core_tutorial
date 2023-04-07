@@ -20,5 +20,8 @@ namespace aspnet_core_tutorial.Models
         public string ProductName { get; set; }
 
         public double UnitPrice { get; set; }
+        
+        // Add relationship to Category Model
+        public Category Category { get; set; }
     }
 }
