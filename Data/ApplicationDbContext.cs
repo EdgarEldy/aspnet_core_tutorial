@@ -8,12 +8,20 @@ using System.Threading.Tasks;
 
 namespace aspnet_core_tutorial.Data
 {
-    public class ApplicationDbContext: IdentityDbContext
+    public class ApplicationDbContext : IdentityDbContext
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
-            :base(options)
+            : base(options)
         {
-
         }
+
+        // DbSets goes here..
+        public DbSet<Category> Categories { get; set; }
+
+        public DbSet<Product> Products { get; set; }
+
+        public DbSet<Customer> Customers { get; set; }
+
+        public DbSet<Order> Orders { get; set; }
     }
 }
