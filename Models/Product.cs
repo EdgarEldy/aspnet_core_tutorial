@@ -1,18 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace aspnet_core_tutorial.Models
 {
+    [Table("Products")]
     public class Product
     {
         // Constructor
         public Product()
         {
-            
         }
-        
-        // Product properties goes here..
+
+        // Properties goes here
         [Key]
         public int Id { get; set; }
 
@@ -20,16 +20,12 @@ namespace aspnet_core_tutorial.Models
 
         public string ProductName { get; set; }
 
-        public string UnitPrice { get; set; }
+        public double UnitPrice { get; set; }
         
-        public DateTime? CreatedAt { get; set; }
-
-        public DateTime? UpdatedAt { get; set; }
-
         // Add relationship to Category Model
-        public virtual Category Category { get; set; }
-
-        // Add relationship to Order Model
-        public virtual ICollection<Order> Orders { get; set; }
+        public Category Category { get; set; }
+        
+        // Add one to many relationship to Order Model
+        public List<Order> Orders { get; set; }
     }
 }
