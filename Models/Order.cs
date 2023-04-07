@@ -22,5 +22,8 @@ namespace aspnet_core_tutorial.Models
         public int Quantity { get; set; }
 
         public double Total { get; set; }
+        
+        // Add relationship to Cutomer model
+        public Customer Customer { get; set; }
     }
 }
