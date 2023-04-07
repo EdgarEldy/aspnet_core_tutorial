@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace aspnet_core_tutorial.Models
@@ -23,5 +24,8 @@ namespace aspnet_core_tutorial.Models
         
         // Add relationship to Category Model
         public Category Category { get; set; }
+        
+        // Add one to many relationship to Order Model
+        public List<Order> Orders { get; set; }
     }
 }
