@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace aspnet_core_tutorial.Models
 {
@@ -9,5 +10,17 @@ namespace aspnet_core_tutorial.Models
         public Order()
         {
         }
+        
+        // Properties goes here..
+        [Key]
+        public int Id { get; set; }
+
+        public int? CustomerId { get; set; }
+
+        public int? ProductId { get; set; }
+
+        public int Quantity { get; set; }
+
+        public double Total { get; set; }
     }
 }
