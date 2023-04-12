@@ -49,5 +49,6 @@ app.MapRazorPages();
 CategorySeeder.Seed(app);
 ProductSeeder.Seed(app);
 CustomerSeeder.Seed(app);
+OrderSeeder.Seed(app);
 
 app.Run();
