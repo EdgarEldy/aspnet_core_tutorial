@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -21,6 +22,10 @@ namespace aspnet_core_tutorial.Models
         public string ProductName { get; set; }
 
         public double UnitPrice { get; set; }
+        
+        public DateTime CreatedAt { get; set; }
+
+        public DateTime UpdatedAt { get; set; }
         
         // Add relationship to Category Model
         public Category Category { get; set; }
