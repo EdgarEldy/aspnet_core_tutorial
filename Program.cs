@@ -48,4 +48,6 @@ app.MapRazorPages();
 // Seeders goes here..
 CategorySeeder.Seed(app);
 ProductSeeder.Seed(app);
+CustomerSeeder.Seed(app);
+
 app.Run();
