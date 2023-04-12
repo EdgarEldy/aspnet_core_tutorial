@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace aspnet_core_tutorial.Models
@@ -22,6 +23,10 @@ namespace aspnet_core_tutorial.Models
         public int Quantity { get; set; }
 
         public double Total { get; set; }
+        
+        public DateTime CreatedAt { get; set; }
+
+        public DateTime UpdatedAt { get; set; }
         
         // Add relationship to Cutomer model
         public Customer Customer { get; set; }
