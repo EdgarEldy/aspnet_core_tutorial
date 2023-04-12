@@ -21,21 +21,27 @@ namespace aspnet_core_tutorial.Seeders
                 if (categories == null)
                 {
                     context.Categories.AddRange(
-                                        new Category
-                                        {
-                                            CategoryName = "Lemonades"
-                                        });
+                        new Category
+                        {
+                            CategoryName = "Lemonades",
+                            CreatedAt = DateTime.Now,
+                            UpdatedAt = DateTime.Now
+                        },
+                        new Category()
+                        {
+                            CategoryName = "Alcohols",
+                            CreatedAt = DateTime.Now,
+                            UpdatedAt = DateTime.Now
+                        });
 
                     context.SaveChanges();
                 }
-
             }
             catch (Exception e)
             {
                 Console.WriteLine(e);
                 throw;
             }
-
         }
     }
 }
