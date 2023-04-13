@@ -21,5 +21,11 @@ namespace aspnet_core_tutorial.Controllers
             var categories = await _context.Categories.ToListAsync();
             return View(categories);
         }
+        
+        // GET: Categories/Create
+        public IActionResult Create()
+        {
+            return View();
+        }
     }
 }
