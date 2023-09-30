@@ -45,6 +45,7 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 app.MapRazorPages();
+
 // Seeders goes here..
 CategorySeeder.Seed(app);
 ProductSeeder.Seed(app);
