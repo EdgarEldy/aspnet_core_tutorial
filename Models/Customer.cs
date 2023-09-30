@@ -1,19 +1,19 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace aspnet_core_tutorial.Models
 {
+    [Table("Customers")]
     public class Customer
     {
         // Constructor
         public Customer()
         {
-            this.Orders = new HashSet<Order>();
         }
-        
-        // Customer properties goes here..
+
+        // Properties goes here..
         [Key]
         public int Id { get; set; }
 
@@ -27,11 +27,11 @@ namespace aspnet_core_tutorial.Models
 
         public string Address { get; set; }
         
-        public DateTime? CreatedAt { get; set; }
+        public DateTime CreatedAt { get; set; }
 
-        public DateTime? UpdatedAt { get; set; }
-
-        // Add relationship to Order Model
-        public ICollection<Order> Orders { get; set; }
+        public DateTime UpdatedAt { get; set; }
+        
+        // Add one to many relationship to Order Model
+        public List<Order> Orders { get; set; }
     }
 }
