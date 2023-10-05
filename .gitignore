@@ -262,3 +262,7 @@ __pycache__/
 /.vscode
 
 Migrations
+
+# db.sqlite3
+db.sqlite3
+db.sqlite3-journal
