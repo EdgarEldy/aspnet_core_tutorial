@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.Linq;
+using System.Threading.Tasks;
 using aspnet_core_tutorial.Data;
 using aspnet_core_tutorial.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -59,6 +60,12 @@ namespace aspnet_core_tutorial.Controllers
             }
 
             return View(category);
+        }
+
+        // Check if category exists
+        private bool CategoryExists(int id)
+        {
+            return (_context.Categories?.Any(e => e.Id == id)).GetValueOrDefault();
         }
     }
 }
