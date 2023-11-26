@@ -1,0 +1,30 @@
+@model aspnet_core_tutorial.Models.Category
+
+@{
+    Layout = "~/Views/Layouts/_Default.cshtml";
+}
+
+<div class="col-lg-12">
+    <div class="panel panel-default">
+        <div class="panel-heading">Removing category...</div>
+        <div class="panel-body">
+            <h3>Are you sure you want to delete this category?</h3>
+            <div col-md-6>
+                <dl class="row">
+                    <dt class="col-sm-2">
+                        <label for="CategoryName">Category Name :</label>
+                    </dt>
+                    <dd class="col-sm-10">
+                        @Html.DisplayFor(model => model.CategoryName)
+                    </dd>
+                </dl>
+
+                <form asp-action="Delete">
+                    <input type="hidden" asp-for="Id" />
+                    <input type="submit" value="Delete" class="btn btn-danger" /> |
+                    <a asp-action="Index" class="btn btn-primary">Back to List</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div><!-- /.col-->
