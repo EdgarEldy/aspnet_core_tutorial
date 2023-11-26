@@ -1,5 +1,7 @@
-﻿using aspnet_core_tutorial.Data;
+﻿using System.Threading.Tasks;
+using aspnet_core_tutorial.Data;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace aspnet_core_tutorial.Controllers
 {
@@ -13,10 +15,13 @@ namespace aspnet_core_tutorial.Controllers
             _context = context;
         }
 
-        // GET
-        public IActionResult Index()
+        // GET: Products
+        public async Task<IActionResult> Index()
         {
-            return View();
+            // Get products with categories
+            var products = _context.Products.Include(p => p.Category);
+
+            return View(await products.ToListAsync());
         }
     }
 }
