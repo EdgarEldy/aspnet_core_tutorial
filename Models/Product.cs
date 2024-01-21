@@ -19,6 +19,7 @@ namespace aspnet_core_tutorial.Models
 
         public int? CategoryId { get; set; }
 
+        [Column(TypeName = "varchar(100)")]
         public string ProductName { get; set; }
 
         public double UnitPrice { get; set; }
