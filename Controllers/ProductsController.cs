@@ -1,6 +1,7 @@
 ﻿using System.Threading.Tasks;
 using aspnet_core_tutorial.Data;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
 namespace aspnet_core_tutorial.Controllers
@@ -22,6 +23,13 @@ namespace aspnet_core_tutorial.Controllers
             var products = _context.Products.Include(p => p.Category);
 
             return View(await products.ToListAsync());
+        }
+
+        // GET: Products/Create
+        public IActionResult Create()
+        {
+            ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "CategoryName");
+            return View();
         }
     }
 }
