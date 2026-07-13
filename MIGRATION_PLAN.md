@@ -130,13 +130,13 @@ Le dépôt contient déjà plusieurs branches issues du développement initial d
 
 ## Étape 4 — Tests unitaires
 
-- [ ] Créer un projet `aspnet_core_tutorial.UnitTests` (xUnit)
-- [ ] Ajouter les packages : `xunit`, `xunit.runner.visualstudio`, `Moq` (ou `NSubstitute`), `Microsoft.EntityFrameworkCore.InMemory` (ou un provider en mémoire adapté)
-- [ ] Tester au minimum :
+- [x] Créer un projet `aspnet_core_tutorial.UnitTests` (xUnit)
+- [x] Ajouter les packages : `xunit`, `xunit.runner.visualstudio`, `Moq` (ou `NSubstitute`), `Microsoft.EntityFrameworkCore.InMemory` (ou un provider en mémoire adapté)
+- [x] Tester au minimum :
   - Les contrôleurs (`CategoriesController`, `ProductsController`, `HomeController`) : actions GET/POST, cas nominal + cas d'erreur (ex: entité introuvable → 404)
   - Les `Seeders` : logique de seed (ne duplique pas les données si déjà présentes, par exemple)
   - Les `Models` : validations éventuelles (data annotations)
-- [ ] Isoler l'accès aux données via `ApplicationDbContext` en mémoire (`UseInMemoryDatabase`) pour ne pas dépendre de PostgreSQL dans les tests unitaires
+- [x] Isoler l'accès aux données via `ApplicationDbContext` en mémoire (`UseInMemoryDatabase`) pour ne pas dépendre de PostgreSQL dans les tests unitaires
 
 **Critère de validation** : `dotnet test` sur le projet UnitTests passe à 100%, couverture raisonnable sur les contrôleurs.
 

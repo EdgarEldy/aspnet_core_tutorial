@@ -279,11 +279,11 @@ plan's Etape 7, to match the sibling `spring-boot-tutorial` project's structure)
 
 ### Etape 4 - Unit tests
 
-- [ ] `aspnet_core_tutorial.UnitTests` project (xUnit, `Microsoft.EntityFrameworkCore.InMemory`)
-- [ ] Controller tests (`CategoriesController`, `ProductsController`, `HomeController`): nominal +
+- [x] `aspnet_core_tutorial.UnitTests` project (xUnit, `Microsoft.EntityFrameworkCore.InMemory`)
+- [x] Controller tests (`CategoriesController`, `ProductsController`, `HomeController`): nominal +
   error cases (entity not found -> 404)
-- [ ] Seeder tests: no duplicate seeding on repeated runs
-- [ ] Model validation tests (Data Annotations)
+- [x] Seeder tests: no duplicate seeding on repeated runs
+- [x] Model validation tests (Data Annotations)
 
 ### Etape 5 - Integration tests
 
