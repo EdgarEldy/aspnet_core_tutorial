@@ -315,7 +315,7 @@ docker compose up --build
 
 The app is served on `http://localhost:8080`. There is no Adminer service in
 `docker-compose.yml`; use an externally-run pgAdmin (or any PostgreSQL client) pointed at
-`localhost:5432` with the credentials from `.env` to inspect the database.
+`localhost:5433` with the credentials from `.env` to inspect the database.
 
 ### Validating the setup
 
