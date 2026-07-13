@@ -10,6 +10,9 @@ The data model follows this schema: `categories` -> `products` -> `orders` <- `c
 
 Repository: https://github.com/EdgarEldy/aspnet_core_tutorial
 
+> This README is the living reference for the project's state and remaining work (see
+> [Roadmap](#roadmap)).
+
 ## Table of contents
 
 - [Tech stack](#tech-stack)
@@ -19,7 +22,7 @@ Repository: https://github.com/EdgarEldy/aspnet_core_tutorial
 - [feature/core-architecture](#featurecore-architecture)
 - [Roadmap](#roadmap)
 - [Getting started](#getting-started)
-- [Migration reference](#migration-reference)
+- [Further reading](#further-reading)
 
 ## Tech stack
 
@@ -112,15 +115,15 @@ ASP.NET Core Identity adds its own schema alongside these tables (`AspNetUsers`,
 |---|---|
 | `master` | Stable branch, integration target once `develop` is validated. |
 | `develop` | Integration branch for feature work merged after `master` was still on .NET 6 / SQL Server. |
-| `feature/migration-dotnet10-postgres` | One-time migration branch (Etapes 0-2 of `MIGRATION_PLAN.md`): .NET 6 -> .NET 10, SQL Server -> PostgreSQL. Branched from `feature/config`. |
+| `feature/migration-dotnet10-postgres` | One-time migration branch (the .NET 6 -> .NET 10, SQL Server -> PostgreSQL swap). Branched from `feature/config`. |
 | `feature/core-architecture` | Continues directly from `feature/migration-dotnet10-postgres`: technical foundation for the modernized stack (Docker, docker-compose, CI). Named after the equivalent branch in the sibling `spring-boot-tutorial` project, since it plays the same role: architecture/infrastructure skeleton merged first, before feature branches. |
 | `feature/config`, `feature/templating`, `feature/data-modeling` | Pre-migration tutorial branches (configuration, Razor layout, initial data modeling), already merged into `develop`/`master` before the .NET 10 / PostgreSQL migration started. |
-| `feature/categories`, `feature/customers`, `feature/products`, `feature/orders` | Pre-migration tutorial branches implementing CRUD for each entity on .NET 6 / SQL Server. Re-validated against .NET 10 / PostgreSQL as part of the Etape 0 merge order in `MIGRATION_PLAN.md`. |
+| `feature/categories`, `feature/customers`, `feature/products`, `feature/orders` | Pre-migration tutorial branches implementing CRUD for each entity on .NET 6 / SQL Server. Re-validated against .NET 10 / PostgreSQL, then reconciled with `feature/core-architecture`. |
 | `feature/auth` | Pre-migration tutorial branch, base of the original branch history (ASP.NET Core Identity wiring). |
 
-See `MIGRATION_PLAN.md` (Etape 0) for the full branch dependency graph and the merge order used
-to reconcile pre-migration branches with the .NET 10 / PostgreSQL base, and `MIGRATION_LOG.md`
-for how that analysis was actually carried out.
+See `MIGRATION_LOG.md` for the full branch dependency graph, the merge order used to reconcile
+pre-migration branches with the .NET 10 / PostgreSQL base, and how that analysis was actually
+carried out.
 
 ## Project structure
 
@@ -152,13 +155,12 @@ aspnet_core_tutorial/
 │   └── workflows/
 │       └── ci.yml
 ├── Dockerfile                       (multi-stage: SDK 10 build, ASP.NET 10 runtime, non-root user)
-├── docker-compose.yml               (app + postgres, no Adminer)
+├── docker-compose.yml               (app + postgres)
 ├── .dockerignore
 ├── .env.example                     (placeholder values, copy to .env for local use)
 ├── appsettings.json
 ├── appsettings.Development.json
 ├── aspnet_core_tutorial.csproj
-├── MIGRATION_PLAN.md                (step-by-step migration/modernization plan)
 ├── MIGRATION_LOG.md                 (account of how Etapes 0-2 were actually executed)
 └── README.md
 ```
@@ -193,11 +195,9 @@ and CI, merged first so every subsequent feature branch builds on a working, tes
 
 ### Configuration notes
 
-- **No Adminer in `docker-compose.yml`.** Unlike the original Etape 3 plan text in
-  `MIGRATION_PLAN.md` (which mentions Adminer), the actual `docker-compose.yml` on this branch
-  only declares `app` and `postgres`. pgAdmin is used externally (outside of docker-compose) for
-  database administration, so an in-compose admin UI would be redundant. If this changes later,
-  add the service back with its own healthcheck and no hardcoded credentials.
+- **Database administration stays outside docker-compose.** `docker-compose.yml` only declares
+  `app` and `postgres`; pgAdmin (or any PostgreSQL client) is run externally, pointed at the
+  published `postgres` port, so there's no extra admin UI service to maintain credentials for.
 - **Secrets never hardcoded.** `docker-compose.yml` interpolates every credential from `.env`
   (`${POSTGRES_DB}`, `${POSTGRES_USER}`, `${POSTGRES_PASSWORD}`), which is git-ignored;
   `.env.example` documents the same keys with placeholder/empty values. In CI, the equivalent
@@ -225,21 +225,55 @@ and CI, merged first so every subsequent feature branch builds on a working, tes
 
 ## Roadmap
 
-Remaining `MIGRATION_PLAN.md` steps, not yet implemented on this branch:
+The .NET 10 / PostgreSQL migration and the initial technical foundation are done. This section
+is the living task list for what's left. Check items off as they land, in order, one branch/PR
+per group unless noted otherwise.
 
-- **Etape 4** - Unit tests (xUnit, `Microsoft.EntityFrameworkCore.InMemory`) for controllers,
-  seeders, and model validation.
-- **Etape 5** - Integration tests (`Microsoft.AspNetCore.Mvc.Testing` + `Testcontainers.PostgreSql`)
-  covering the main HTTP flows and authentication redirects.
-- **Etape 6 (completion)** - Wire the `test`/`integration-test` CI jobs once the projects above
-  exist; publish test results as run summaries/artifacts.
-- **Etape 7** - Hardening pass: service/repository layer extraction out of controllers, stronger
-  Data Annotations, centralized exception handling, Serilog structured logging, `/health` endpoint
-  backed by PostgreSQL, pagination, rate limiting, security headers, anti-forgery checks on POST
-  forms, `dotnet list package --vulnerable` audit, `AsNoTracking()`/response compression/
-  `IMemoryCache`, `CreatedAt`/`UpdatedAt` auto-population, per-environment `appsettings.*.json`
-  plus `docker-compose.override.yml` (dev) and `docker-compose.prod.yml` (prod, no Adminer,
-  minimal exposed ports).
+### Cross-cutting foundation (anticipated on `feature/core-architecture`, ahead of the original
+plan's Etape 7, to match the sibling `spring-boot-tutorial` project's structure)
+
+- [x] Centralized exception handling middleware, with unhandled-exception logging
+- [x] Structured logging (Serilog: console + rolling file, per-environment levels)
+- [x] `/health` endpoint backed by a real PostgreSQL connection check
+- [x] Swagger / OpenAPI, exposed in dev only
+- [x] `docker-compose.yml`'s `app` service healthcheck wired to `/health`
+
+### Etape 4 - Unit tests
+
+- [ ] `aspnet_core_tutorial.UnitTests` project (xUnit, `Microsoft.EntityFrameworkCore.InMemory`)
+- [ ] Controller tests (`CategoriesController`, `ProductsController`, `HomeController`): nominal +
+  error cases (entity not found -> 404)
+- [ ] Seeder tests: no duplicate seeding on repeated runs
+- [ ] Model validation tests (Data Annotations)
+
+### Etape 5 - Integration tests
+
+- [ ] `aspnet_core_tutorial.IntegrationTests` project (`Microsoft.AspNetCore.Mvc.Testing` +
+  `Testcontainers.PostgreSql`, a real ephemeral PostgreSQL container per run)
+- [ ] Home page renders (200 OK)
+- [ ] Full CRUD over HTTP for `Products` and `Categories`
+- [ ] Authentication redirects (protected pages -> `/Identity/Account/Login` when signed out)
+- [ ] EF Core migrations apply automatically at container startup
+
+### Etape 6 - CI completion
+
+- [ ] Wire the `test`/`integration-test` jobs into `.github/workflows/ci.yml` once the projects
+  above exist (the `build` job's `postgres:16` service is already in place for this)
+- [ ] Publish test results as run summaries/artifacts (`dotnet test --logger trx` + upload, or
+  `dorny/test-reporter`)
+
+### Etape 7 - Remaining hardening
+
+- [ ] Service/repository layer extraction out of controllers
+- [ ] Stronger Data Annotations on `Category`/`Product`/`Customer`/`Order`, surfaced in Razor views
+- [ ] Pagination on `Products`/`Categories`/`Orders` lists
+- [ ] Rate limiting, security headers (`X-Content-Type-Options`, `Content-Security-Policy`),
+  anti-forgery checks on every POST form
+- [ ] `dotnet list package --vulnerable` audit (local and/or CI)
+- [ ] `AsNoTracking()` on read-only queries, response compression, `IMemoryCache` for low-churn
+  data (categories)
+- [ ] Per-environment `appsettings.Staging.json`/`appsettings.Production.json`, plus
+  `docker-compose.override.yml` (dev) and `docker-compose.prod.yml` (prod, minimal exposed ports)
 
 ## Getting started
 
@@ -274,9 +308,8 @@ cp .env.example .env
 docker compose up --build
 ```
 
-The app is served on `http://localhost:8080`. There is no Adminer service in
-`docker-compose.yml`; use an externally-run pgAdmin (or any PostgreSQL client) pointed at
-`localhost:5432` with the credentials from `.env` to inspect the database.
+The app is served on `http://localhost:8084`. To inspect the database, point an externally-run
+pgAdmin (or any PostgreSQL client) at `localhost:5433` with the credentials from `.env`.
 
 ### Validating the setup
 
@@ -288,10 +321,8 @@ docker compose config
 docker build .
 ```
 
-## Migration reference
+## Further reading
 
-- `MIGRATION_PLAN.md` - the authoritative, step-by-step plan (Etape 0 through Etape 7), meant to
-  be followed in order.
-- `MIGRATION_LOG.md` - a detailed account of how Etapes 0-2 (branch topology reconciliation,
-  .NET 10 upgrade, PostgreSQL swap) were actually executed, including the pitfalls found along
+- `MIGRATION_LOG.md` - a detailed account of how the .NET 10 upgrade, the PostgreSQL swap, and
+  the branch topology reconciliation were actually executed, including the pitfalls found along
   the way (e.g. a `.gitignore` rule silently excluding `Migrations/` from version control).
