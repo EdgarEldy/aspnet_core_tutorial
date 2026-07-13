@@ -18,7 +18,8 @@ builder.Host.UseSerilog((context, services, loggerConfiguration) => loggerConfig
     .Enrich.FromLogContext());
 
 // Add services to the container.
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException("Connection string 'DefaultConnection' is not configured.");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(connectionString));
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
@@ -26,7 +27,7 @@ builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
 builder.Services.AddHealthChecks()
-    .AddNpgSql(connectionString!, name: "postgresql", tags: new[] { "database", "postgresql" });
+    .AddNpgSql(connectionString, name: "postgresql", tags: new[] { "database", "postgresql" });
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
@@ -82,6 +83,17 @@ var app = builder.Build();
 
 app.UseSerilogRequestLogging();
 
+// GlobalExceptionHandler (registered above) logs every unhandled exception first; it always
+// returns false so the pipeline still re-executes at "/Home/Error" below. Diagnostics are
+// suppressed here to avoid the middleware logging the same exception a second time. Registered
+// in every environment, not just production, so unhandled exceptions are logged during local
+// development too.
+app.UseExceptionHandler(new ExceptionHandlerOptions
+{
+    ExceptionHandlingPath = "/Home/Error",
+    SuppressDiagnosticsCallback = _ => true
+});
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -94,14 +106,6 @@ if (app.Environment.IsDevelopment())
 }
 else
 {
-    // GlobalExceptionHandler (registered above) logs every unhandled exception first; it always
-    // returns false so the pipeline still re-executes at "/Home/Error" below. Diagnostics are
-    // suppressed here to avoid the middleware logging the same exception a second time.
-    app.UseExceptionHandler(new ExceptionHandlerOptions
-    {
-        ExceptionHandlingPath = "/Home/Error",
-        SuppressDiagnosticsCallback = _ => true
-    });
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
