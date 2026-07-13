@@ -10,6 +10,19 @@
     <Folder Include="Areas\Identity\Services\" />
   </ItemGroup>
 
+  <!--
+    The test projects live in sibling directories directly under the repo root, alongside this
+    project's own folder. The SDK's default item globs are recursive from this .csproj's
+    directory, so without these excludes their *.cs files would otherwise get compiled twice:
+    once by their own project, once here.
+  -->
+  <ItemGroup>
+    <Compile Remove="aspnet_core_tutorial.UnitTests/**/*.cs" />
+    <Compile Remove="aspnet_core_tutorial.IntegrationTests/**/*.cs" />
+    <Content Remove="aspnet_core_tutorial.UnitTests/**/*" />
+    <Content Remove="aspnet_core_tutorial.IntegrationTests/**/*" />
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="AspNetCore.HealthChecks.NpgSql" Version="9.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="10.0.9" />
