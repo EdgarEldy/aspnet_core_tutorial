@@ -20,6 +20,7 @@ Repository: https://github.com/EdgarEldy/aspnet_core_tutorial
 - [Branching strategy](#branching-strategy)
 - [Project structure](#project-structure)
 - [feature/core-architecture](#featurecore-architecture)
+- [feature/products](#featureproducts)
 - [Roadmap](#roadmap)
 - [Getting started](#getting-started)
 - [Further reading](#further-reading)
@@ -118,7 +119,8 @@ ASP.NET Core Identity adds its own schema alongside these tables (`AspNetUsers`,
 | `feature/migration-dotnet10-postgres` | One-time migration branch (the .NET 6 -> .NET 10, SQL Server -> PostgreSQL swap). Branched from `feature/config`. |
 | `feature/core-architecture` | Continues directly from `feature/migration-dotnet10-postgres`: technical foundation for the modernized stack (Docker, docker-compose, CI). Named after the equivalent branch in the sibling `spring-boot-tutorial` project, since it plays the same role: architecture/infrastructure skeleton merged first, before feature branches. |
 | `feature/config`, `feature/templating`, `feature/data-modeling` | Pre-migration tutorial branches (configuration, Razor layout, initial data modeling), already merged into `develop`/`master` before the .NET 10 / PostgreSQL migration started. |
-| `feature/categories`, `feature/customers`, `feature/products`, `feature/orders` | Pre-migration tutorial branches implementing CRUD for each entity on .NET 6 / SQL Server. Re-validated against .NET 10 / PostgreSQL, then reconciled with `feature/core-architecture`. |
+| `feature/products` | `Category` and `Product` CRUD, built on `feature/core-architecture`. The former `feature/categories` branch was merged into it and retired: its pre-migration history never diverged from `feature/products`, so keeping both was redundant. |
+| `feature/customers`, `feature/orders` | Pre-migration tutorial branches for the remaining entities, to be reconciled with `feature/products` the same way. |
 | `feature/auth` | Pre-migration tutorial branch, base of the original branch history (ASP.NET Core Identity wiring). |
 
 See `MIGRATION_LOG.md` for the full branch dependency graph, the merge order used to reconcile
@@ -135,18 +137,26 @@ aspnet_core_tutorial/
 │       └── Pages/
 │           └── Account/ (Login, Register, scaffolded ASP.NET Core Identity UI)
 ├── Controllers/
-│   └── HomeController.cs
+│   ├── HomeController.cs
+│   ├── CategoriesController.cs
+│   └── ProductsController.cs
 ├── Data/
 │   └── ApplicationDbContext.cs      (IdentityDbContext + Category/Product/Customer/Order DbSets)
+├── Infrastructure/
+│   └── GlobalExceptionHandler.cs    (IExceptionHandler, logs every unhandled exception)
 ├── Migrations/                      (EF Core migrations, PostgreSQL/Npgsql-native)
 ├── Models/
 │   ├── Category.cs
 │   ├── Product.cs
 │   ├── Customer.cs
 │   ├── Order.cs
+│   ├── PaginatedList.cs             (generic pagination helper used by list views)
 │   └── ErrorViewModel.cs
+├── Seeders/                         (static Seed(app) methods called from Program.cs at startup)
 ├── Views/
 │   ├── Home/
+│   ├── Categories/
+│   ├── Products/
 │   ├── Layouts/
 │   ├── Partials/
 │   └── Shared/
@@ -165,10 +175,8 @@ aspnet_core_tutorial/
 └── README.md
 ```
 
-`Controllers/`, `Views/`, and `Models/` currently only cover the Home/Identity scaffolding plus
-the four business entities; the CRUD controllers and views for `Category`/`Product`/`Customer`/
-`Order` land with their respective `feature/*` branches per the roadmap below. There is no
-`Seeders/` folder yet on this branch for the same reason.
+`Category` and `Product` have full CRUD (controllers, views, seeders); `Customer` and `Order`
+still only exist as EF Core models pending their own `feature/*` branches per the roadmap below.
 
 ## feature/core-architecture
 
@@ -223,6 +231,37 @@ and CI, merged first so every subsequent feature branch builds on a working, tes
   single stage; `test`/`integration-test` jobs are intentionally left out until Etapes 4-5 add
   real test projects, rather than referencing projects that don't exist yet.
 
+## feature/products
+
+`Category` and `Product` CRUD, built directly on `feature/core-architecture`. Originally split
+into a separate `feature/categories` branch (the pre-migration tutorial history for the two
+entities never actually diverged from each other), merged into `feature/products` and retired
+once confirmed fully redundant.
+
+### Tasks
+
+- [x] `CategoriesController`: full CRUD (`Index`, `Create`, `Edit`, `Delete`) - already complete
+  from the pre-migration branch, re-validated against PostgreSQL
+- [x] `ProductsController`: completed the missing `Create` (POST), `Edit`, and `Delete` actions -
+  only `Index` and a `Create` GET existed before, so the create form had nothing to submit to and
+  there was no way to update or remove a product
+- [x] Fixed a startup crash: the seeders wrote `DateTime.Now` (`Kind=Local`) into `timestamp with
+  time zone` columns, which Npgsql rejects outright - switched to `DateTime.UtcNow`
+- [x] Search and pagination on both list views (`PaginatedList<T>` helper, `AsNoTracking()` since
+  the lists are read-only), anticipated from Etape 7 for the same reason as
+  `feature/core-architecture`'s cross-cutting items
+
+### Configuration notes
+
+- **`PaginatedList<T>`** (`Models/PaginatedList.cs`) is a thin `List<T>` subclass carrying
+  `PageIndex`/`TotalPages`, following the standard ASP.NET Core MVC pagination pattern - no
+  external paging library needed for a page count this small.
+- **Search is a simple `Contains()` filter** on `CategoryName`/`ProductName`, applied before
+  `OrderBy` and pagination so the count and page split are computed against the filtered set, not
+  the full table.
+- **All list/detail reads use `AsNoTracking()`**; only the single entity fetched in `Edit`/`Delete`
+  before a write stays tracked.
+
 ## Roadmap
 
 The .NET 10 / PostgreSQL migration and the initial technical foundation are done. This section
@@ -266,7 +305,8 @@ plan's Etape 7, to match the sibling `spring-boot-tutorial` project's structure)
 
 - [ ] Service/repository layer extraction out of controllers
 - [ ] Stronger Data Annotations on `Category`/`Product`/`Customer`/`Order`, surfaced in Razor views
-- [ ] Pagination on `Products`/`Categories`/`Orders` lists
+- [x] Pagination on `Products`/`Categories` lists (see `feature/products`); still needed on `Orders`
+  once that entity's CRUD lands
 - [ ] Rate limiting, security headers (`X-Content-Type-Options`, `Content-Security-Policy`),
   anti-forgery checks on every POST form
 - [ ] `dotnet list package --vulnerable` audit (local and/or CI)
