@@ -10,6 +10,8 @@ namespace aspnet_core_tutorial.Controllers
 {
     public class ProductsController : Controller
     {
+        private const int PageSize = 10;
+
         // Initialize database context
         private readonly ApplicationDbContext _context;
 
@@ -19,12 +21,20 @@ namespace aspnet_core_tutorial.Controllers
         }
 
         // GET: Products
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string? searchString, int pageNumber = 1)
         {
             // Get products with categories
-            var products = _context.Products.Include(p => p.Category);
+            var products = _context.Products.AsNoTracking().Include(p => p.Category).AsQueryable();
 
-            return View(await products.ToListAsync());
+            if (!string.IsNullOrWhiteSpace(searchString))
+            {
+                products = products.Where(p => p.ProductName.Contains(searchString));
+            }
+
+            ViewData["CurrentFilter"] = searchString;
+
+            products = products.OrderBy(p => p.ProductName);
+            return View(await PaginatedList<Product>.CreateAsync(products, pageNumber, PageSize));
         }
 
         // GET: Products/Create
