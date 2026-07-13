@@ -29,6 +29,10 @@ namespace aspnet_core_tutorial.Models
 
         public static async Task<PaginatedList<T>> CreateAsync(IQueryable<T> source, int pageIndex, int pageSize)
         {
+            // Clamp so a caller-supplied pageIndex <= 0 (e.g. straight from a query string) can
+            // never turn into a negative Skip(), which Postgres rejects as an invalid OFFSET.
+            pageIndex = Math.Max(pageIndex, 1);
+
             var count = await source.CountAsync();
             var items = await source.Skip((pageIndex - 1) * pageSize).Take(pageSize).ToListAsync();
             return new PaginatedList<T>(items, count, pageIndex, pageSize);
