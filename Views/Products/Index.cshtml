@@ -22,11 +22,13 @@
                     {
                         <tr>
                             <td>@Html.DisplayFor(modelItem => item.Id)</td>
-                            <td>@Html.DisplayFor(modelItem => item.Category.CategoryName)</td>
+                            <td>@(item.Category?.CategoryName ?? "-")</td>
                             <td>@Html.DisplayFor(modelItem => item.ProductName)</td>
                             <td>@Html.DisplayFor(modelItem => item.UnitPrice)</td>
                             <td>
                                 <div class="card-footer">
+                                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-primary">Edit</a>
+                                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-danger">Delete</a>
                                 </div>
                             </td>
                         </tr>

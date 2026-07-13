@@ -1,15 +1,17 @@
-﻿@model aspnet_core_tutorial.Models.Product
+@model aspnet_core_tutorial.Models.Product
 
 @{
     Layout = "~/Views/Layouts/_Default.cshtml";
 }
+
 <div class="col-lg-12">
     <div class="panel panel-default">
-        <div class="panel-heading">Add a product</div>
+        <div class="panel-heading">Update a product</div>
         <div class="panel-body">
             <div class="col-md-6">
-                <form asp-action="Create">
+                <form asp-action="Edit">
                     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    <input type="hidden" asp-for="Id" />
                     <div class="form-group">
                         <label class="control-label">Category</label>
                         <select asp-for="CategoryId" class="form-control" asp-items="ViewBag.CategoryId"></select>
