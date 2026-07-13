@@ -9,6 +9,8 @@ namespace aspnet_core_tutorial.Controllers
 {
     public class CategoriesController : Controller
     {
+        private const int PageSize = 10;
+
         // Initialize database context using dependency injection
         private readonly ApplicationDbContext _context;
 
@@ -18,10 +20,19 @@ namespace aspnet_core_tutorial.Controllers
         }
 
         // GET: Categories
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string? searchString, int pageNumber = 1)
         {
-            var categories = await _context.Categories.ToListAsync();
-            return View(categories);
+            var categories = _context.Categories.AsNoTracking().AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(searchString))
+            {
+                categories = categories.Where(c => c.CategoryName.Contains(searchString));
+            }
+
+            ViewData["CurrentFilter"] = searchString;
+
+            categories = categories.OrderBy(c => c.CategoryName);
+            return View(await PaginatedList<Category>.CreateAsync(categories, pageNumber, PageSize));
         }
 
         // GET: Categories/Create
