@@ -1,19 +1,45 @@
 using System;
 using aspnet_core_tutorial.Data;
+using aspnet_core_tutorial.Infrastructure;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.OpenApi;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseSerilog((context, services, loggerConfiguration) => loggerConfiguration
+    .ReadFrom.Configuration(context.Configuration)
+    .ReadFrom.Services(services)
+    .Enrich.FromLogContext());
 
 // Add services to the container.
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(connectionString));
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
+
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+
+builder.Services.AddHealthChecks()
+    .AddNpgSql(connectionString!, name: "postgresql", tags: new[] { "database", "postgresql" });
+
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "aspnet_core_tutorial",
+        Version = "v1",
+        Description = "Server-rendered MVC/Razor Pages application. This Swagger UI documents "
+            + "any API endpoints exposed alongside the MVC controllers, as a foundation for future "
+            + "API work rather than a fully-fledged REST API surface today."
+    });
+});
 
 builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
     .AddEntityFrameworkStores<ApplicationDbContext>();
@@ -54,14 +80,28 @@ builder.Services.ConfigureApplicationCookie(options =>
 
 var app = builder.Build();
 
+app.UseSerilogRequestLogging();
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseMigrationsEndPoint();
+    app.UseSwagger();
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint("/swagger/v1/swagger.json", "aspnet_core_tutorial v1");
+    });
 }
 else
 {
-    app.UseExceptionHandler("/Home/Error");
+    // GlobalExceptionHandler (registered above) logs every unhandled exception first; it always
+    // returns false so the pipeline still re-executes at "/Home/Error" below. Diagnostics are
+    // suppressed here to avoid the middleware logging the same exception a second time.
+    app.UseExceptionHandler(new ExceptionHandlerOptions
+    {
+        ExceptionHandlingPath = "/Home/Error",
+        SuppressDiagnosticsCallback = _ => true
+    });
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
@@ -78,5 +118,6 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 app.MapRazorPages();
+app.MapHealthChecks("/health");
 
 app.Run();
