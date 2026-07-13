@@ -27,8 +27,8 @@ public static class OrderSeeder
                         ProductId = 1,
                         Quantity = 2,
                         Total = 1600,
-                        CreatedAt = DateTime.Now,
-                        UpdatedAt = DateTime.Now
+                        CreatedAt = DateTime.UtcNow,
+                        UpdatedAt = DateTime.UtcNow
                     },
                     new Order
                     {
@@ -36,8 +36,8 @@ public static class OrderSeeder
                         ProductId = 2,
                         Quantity = 2,
                         Total = 5000,
-                        CreatedAt = DateTime.Now,
-                        UpdatedAt = DateTime.Now
+                        CreatedAt = DateTime.UtcNow,
+                        UpdatedAt = DateTime.UtcNow
                     });
 
                 context.SaveChanges();
