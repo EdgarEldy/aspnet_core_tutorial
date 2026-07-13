@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using aspnet_core_tutorial.Data;
 using aspnet_core_tutorial.Models;
@@ -48,6 +49,9 @@ namespace aspnet_core_tutorial.Controllers
         {
             if (ModelState.IsValid)
             {
+                var now = DateTime.UtcNow;
+                category.CreatedAt = now;
+                category.UpdatedAt = now;
                 _context.Add(category);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
@@ -93,9 +97,21 @@ namespace aspnet_core_tutorial.Controllers
 
             if (ModelState.IsValid)
             {
+                // Fetch the tracked entity instead of attaching the partially-bound one directly:
+                // the incoming model has no CreatedAt (excluded from [Bind] on purpose), and
+                // _context.Update() on a detached entity would mark every property as modified,
+                // overwriting CreatedAt with its CLR default.
+                var categoryToUpdate = await _context.Categories.FindAsync(id);
+                if (categoryToUpdate == null)
+                {
+                    return NotFound();
+                }
+
+                categoryToUpdate.CategoryName = category.CategoryName;
+                categoryToUpdate.UpdatedAt = DateTime.UtcNow;
+
                 try
                 {
-                    _context.Update(category);
                     await _context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)

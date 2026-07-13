@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using aspnet_core_tutorial.Data;
 using aspnet_core_tutorial.Models;
@@ -38,9 +39,9 @@ namespace aspnet_core_tutorial.Controllers
         }
 
         // GET: Products/Create
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
-            ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "CategoryName");
+            await PopulateCategoryDropDownAsync();
             return View();
         }
 
@@ -51,12 +52,15 @@ namespace aspnet_core_tutorial.Controllers
         {
             if (ModelState.IsValid)
             {
+                var now = DateTime.UtcNow;
+                product.CreatedAt = now;
+                product.UpdatedAt = now;
                 _context.Add(product);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
 
-            ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "CategoryName", product.CategoryId);
+            await PopulateCategoryDropDownAsync(product.CategoryId);
             return View(product);
         }
 
@@ -74,7 +78,7 @@ namespace aspnet_core_tutorial.Controllers
                 return NotFound();
             }
 
-            ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "CategoryName", product.CategoryId);
+            await PopulateCategoryDropDownAsync(product.CategoryId);
             return View(product);
         }
 
@@ -82,6 +86,15 @@ namespace aspnet_core_tutorial.Controllers
         private bool ProductExists(int id)
         {
             return (_context.Products?.Any(e => e.Id == id)).GetValueOrDefault();
+        }
+
+        // Categories dropdown for Create/Edit views. Awaited explicitly (ToListAsync) rather than
+        // handing SelectList a raw IQueryable, which would enumerate it synchronously and block
+        // inside these async actions.
+        private async Task PopulateCategoryDropDownAsync(int? selectedCategoryId = null)
+        {
+            var categories = await _context.Categories.AsNoTracking().ToListAsync();
+            ViewData["CategoryId"] = new SelectList(categories, "Id", "CategoryName", selectedCategoryId);
         }
 
         // POST: Products/Edit/5
@@ -98,9 +111,23 @@ namespace aspnet_core_tutorial.Controllers
 
             if (ModelState.IsValid)
             {
+                // Fetch the tracked entity instead of attaching the partially-bound one directly:
+                // the incoming model has no CreatedAt (excluded from [Bind] on purpose), and
+                // _context.Update() on a detached entity would mark every property as modified,
+                // overwriting CreatedAt with its CLR default.
+                var productToUpdate = await _context.Products.FindAsync(id);
+                if (productToUpdate == null)
+                {
+                    return NotFound();
+                }
+
+                productToUpdate.CategoryId = product.CategoryId;
+                productToUpdate.ProductName = product.ProductName;
+                productToUpdate.UnitPrice = product.UnitPrice;
+                productToUpdate.UpdatedAt = DateTime.UtcNow;
+
                 try
                 {
-                    _context.Update(product);
                     await _context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
@@ -117,7 +144,7 @@ namespace aspnet_core_tutorial.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "CategoryName", product.CategoryId);
+            await PopulateCategoryDropDownAsync(product.CategoryId);
             return View(product);
         }
 
