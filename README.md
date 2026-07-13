@@ -257,7 +257,7 @@ dotnet restore
 dotnet build
 
 # Apply EF Core migrations against a local PostgreSQL instance
-# (adjust ConnectionStrings:DefaultConnection in appsettings.Development.json first)
+# (adjust ConnectionStrings:DefaultConnection in appsettings.json first)
 dotnet ef database update
 
 # Run the app
