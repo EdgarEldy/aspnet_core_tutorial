@@ -20,6 +20,12 @@ RUN dotnet publish aspnet_core_tutorial.csproj \
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
 
+# curl is needed for docker-compose's healthcheck to probe /health from inside
+# the container; the base runtime image doesn't ship it by default.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY --from=build /app/publish .
 
 ENV ASPNETCORE_URLS=http://+:8080
