@@ -1,0 +1,103 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  # .NET restore + build. Compiles the app in Release configuration; fails fast
+  # before anything Docker-related runs.
+  build:
+    runs-on: ubuntu-latest
+
+    # Not consumed by any test yet (Etapes 4-5 of MIGRATION_PLAN.md add the unit
+    # and integration test projects later). Declared here now, with the exact
+    # same image and POSTGRES_DB / POSTGRES_USER / POSTGRES_PASSWORD variable
+    # names as docker-compose.yml, so CI and local Docker never drift into two
+    # different Postgres configurations, and wiring up the future
+    # integration-test job is a drop-in change rather than a redesign.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: aspnet_core_db
+          POSTGRES_USER: app_user
+          # Sourced from a GitHub Actions secret, never inlined. POSTGRES_HOST_AUTH_METHOD
+          # below lets this ephemeral, network-isolated CI container start even before
+          # CI_POSTGRES_PASSWORD is configured in the repository (the service is not
+          # consumed by any job yet); it never applies to docker-compose.yml, which
+          # always requires a real POSTGRES_PASSWORD.
+          POSTGRES_PASSWORD: ${{ secrets.CI_POSTGRES_PASSWORD }}
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U app_user -d aspnet_core_db"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: "10.0.x"
+          cache: true
+          cache-dependency-path: aspnet_core_tutorial.csproj
+
+      - name: Restore dependencies
+        run: dotnet restore aspnet_core_tutorial.csproj
+
+      - name: Build (Release)
+        run: dotnet build aspnet_core_tutorial.csproj --configuration Release --no-restore
+
+  # Validates that the Dockerfile still produces a working image.
+  docker-build:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Build Docker image
+        run: docker build -t aspnet_core_tutorial:${{ github.sha }} .
+
+      - name: Save image as tarball
+        run: docker save aspnet_core_tutorial:${{ github.sha }} -o /tmp/aspnet_core_tutorial.tar
+
+      - name: Upload image artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: docker-image
+          path: /tmp/aspnet_core_tutorial.tar
+          retention-days: 1
+
+  # Scans the image built above for known OS/dependency vulnerabilities.
+  # Kept as its own job so an image scan failure is never confused with a
+  # Dockerfile build failure.
+  docker-scan:
+    needs: docker-build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download image artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: docker-image
+          path: /tmp
+
+      - name: Load Docker image
+        run: docker load -i /tmp/aspnet_core_tutorial.tar
+
+      - name: Scan image with Trivy
+        uses: aquasecurity/trivy-action@0.36.0
+        with:
+          image-ref: aspnet_core_tutorial:${{ github.sha }}
+          format: table
+          severity: CRITICAL,HIGH
+          exit-code: "1"
+          ignore-unfixed: true
