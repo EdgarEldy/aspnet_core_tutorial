@@ -155,7 +155,7 @@ aspnet_core_tutorial/
 │   └── workflows/
 │       └── ci.yml
 ├── Dockerfile                       (multi-stage: SDK 10 build, ASP.NET 10 runtime, non-root user)
-├── docker-compose.yml               (app + postgres, no Adminer)
+├── docker-compose.yml               (app + postgres)
 ├── .dockerignore
 ├── .env.example                     (placeholder values, copy to .env for local use)
 ├── appsettings.json
@@ -195,10 +195,9 @@ and CI, merged first so every subsequent feature branch builds on a working, tes
 
 ### Configuration notes
 
-- **No Adminer in `docker-compose.yml`.** `docker-compose.yml` only declares `app` and
-  `postgres`. pgAdmin is used externally (outside of docker-compose) for database
-  administration, so an in-compose admin UI would be redundant. If this changes later, add the
-  service back with its own healthcheck and no hardcoded credentials.
+- **Database administration stays outside docker-compose.** `docker-compose.yml` only declares
+  `app` and `postgres`; pgAdmin (or any PostgreSQL client) is run externally, pointed at the
+  published `postgres` port, so there's no extra admin UI service to maintain credentials for.
 - **Secrets never hardcoded.** `docker-compose.yml` interpolates every credential from `.env`
   (`${POSTGRES_DB}`, `${POSTGRES_USER}`, `${POSTGRES_PASSWORD}`), which is git-ignored;
   `.env.example` documents the same keys with placeholder/empty values. In CI, the equivalent
@@ -233,14 +232,11 @@ per group unless noted otherwise.
 ### Cross-cutting foundation (anticipated on `feature/core-architecture`, ahead of the original
 plan's Etape 7, to match the sibling `spring-boot-tutorial` project's structure)
 
-- [ ] Centralized exception handling middleware, with unhandled-exception logging
-- [ ] Structured logging (Serilog: console + rolling file, per-environment levels)
-- [ ] `/health` endpoint backed by a real PostgreSQL connection check
-- [ ] Swagger / OpenAPI, exposed in dev only
-- [ ] `docker-compose.yml`'s `app` service healthcheck wired to `/health`
-
-*(In progress as of this revision - see the commit history on `feature/core-architecture` for
-current status; update the checkboxes above once each lands and is reviewed.)*
+- [x] Centralized exception handling middleware, with unhandled-exception logging
+- [x] Structured logging (Serilog: console + rolling file, per-environment levels)
+- [x] `/health` endpoint backed by a real PostgreSQL connection check
+- [x] Swagger / OpenAPI, exposed in dev only
+- [x] `docker-compose.yml`'s `app` service healthcheck wired to `/health`
 
 ### Etape 4 - Unit tests
 
@@ -277,8 +273,7 @@ current status; update the checkboxes above once each lands and is reviewed.)*
 - [ ] `AsNoTracking()` on read-only queries, response compression, `IMemoryCache` for low-churn
   data (categories)
 - [ ] Per-environment `appsettings.Staging.json`/`appsettings.Production.json`, plus
-  `docker-compose.override.yml` (dev) and `docker-compose.prod.yml` (prod, no Adminer, minimal
-  exposed ports)
+  `docker-compose.override.yml` (dev) and `docker-compose.prod.yml` (prod, minimal exposed ports)
 
 ## Getting started
 
@@ -313,9 +308,8 @@ cp .env.example .env
 docker compose up --build
 ```
 
-The app is served on `http://localhost:8080`. There is no Adminer service in
-`docker-compose.yml`; use an externally-run pgAdmin (or any PostgreSQL client) pointed at
-`localhost:5433` with the credentials from `.env` to inspect the database.
+The app is served on `http://localhost:8084`. To inspect the database, point an externally-run
+pgAdmin (or any PostgreSQL client) at `localhost:5433` with the credentials from `.env`.
 
 ### Validating the setup
 
