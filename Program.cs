@@ -132,3 +132,17 @@ CustomerSeeder.Seed(app);
 OrderSeeder.Seed(app);
 
 app.Run();
+
+/// <summary>
+/// Explicit partial marker for the top-level statements entry point, required so
+/// <c>WebApplicationFactory&lt;Program&gt;</c> can reference this class from the integration
+/// tests project. Top-level statements generate an internal <c>Program</c> class by default,
+/// which is not visible outside this assembly without this declaration.
+/// </summary>
+/// <remarks>
+/// Created by edgar.muhamyangabo on 7/13/26
+/// Author : edgar.muhamyangabo
+/// Date : 7/13/26
+/// Project : aspnet_core_tutorial
+/// </remarks>
+public partial class Program { }
