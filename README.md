@@ -250,6 +250,9 @@ once confirmed fully redundant.
 - [x] Search and pagination on both list views (`PaginatedList<T>` helper, `AsNoTracking()` since
   the lists are read-only), anticipated from Etape 7 for the same reason as
   `feature/core-architecture`'s cross-cutting items
+- [x] Etape 4/5 test coverage for everything above: 50 unit tests (InMemory) plus 30 integration
+  tests (real Postgres via Testcontainers, real antiforgery tokens, no bypasses) - 80 tests, full
+  suite runs in well under a minute
 
 ### Configuration notes
 
@@ -287,12 +290,15 @@ plan's Etape 7, to match the sibling `spring-boot-tutorial` project's structure)
 
 ### Etape 5 - Integration tests
 
-- [ ] `aspnet_core_tutorial.IntegrationTests` project (`Microsoft.AspNetCore.Mvc.Testing` +
-  `Testcontainers.PostgreSql`, a real ephemeral PostgreSQL container per run)
-- [ ] Home page renders (200 OK)
-- [ ] Full CRUD over HTTP for `Products` and `Categories`
-- [ ] Authentication redirects (protected pages -> `/Identity/Account/Login` when signed out)
-- [ ] EF Core migrations apply automatically at container startup
+- [x] `aspnet_core_tutorial.IntegrationTests` project (`Microsoft.AspNetCore.Mvc.Testing` +
+  `Testcontainers.PostgreSql`, one real ephemeral PostgreSQL container shared for the whole run
+  rather than one per test, so the suite stays fast)
+- [x] Home page renders (200 OK)
+- [x] Full CRUD over HTTP for `Products` and `Categories`, with the real antiforgery token
+- [x] Authentication redirects (`/Identity/Account/Manage` -> `/Identity/Account/Login` when
+  signed out; `Categories`/`Products` carry no `[Authorize]` yet, so there's no business-CRUD
+  redirect case to test until that lands)
+- [x] EF Core migrations apply automatically at container startup
 
 ### Etape 6 - CI completion
 
