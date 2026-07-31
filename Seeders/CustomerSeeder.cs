@@ -25,21 +25,21 @@ public static class CustomerSeeder
                     {
                         FirstName = "Edgar",
                         LastName = "Eldy",
-                        Tel = "87568899",
+                        Telephone = "87568899",
                         Email = "edgareldy@mailnator.com",
                         Address = "New York",
-                        CreatedAt = DateTime.Now,
-                        UpdatedAt = DateTime.Now
+                        CreatedAt = DateTime.UtcNow,
+                        UpdatedAt = DateTime.UtcNow
                     },
                     new Customer
                     {
                         FirstName = "John",
                         LastName = "Travolta",
-                        Tel = "53446477",
+                        Telephone = "53446477",
                         Email = "johntravolta@mailnator.com",
                         Address = "Los Angeles",
-                        CreatedAt = DateTime.Now,
-                        UpdatedAt = DateTime.Now
+                        CreatedAt = DateTime.UtcNow,
+                        UpdatedAt = DateTime.UtcNow
                     });
 
                 context.SaveChanges();

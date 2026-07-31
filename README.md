@@ -1,9 +1,490 @@
-# ASP.NET CORE TUTORIAL
-An ASP.NET core tutorial using MVC Architecture, Entity Framework Core and SQL Server Database.
-## Configurations
-1. EntityFrameworkCore 3.1.23
-1. EntityFrameworkCore.SqlServer 3.1.23
-2. EntityFrameworkCore.Design 3.1.23
-3. EntityFrameworkCore.Tools 3.1.23
-4. Visual Studio 2019 Professional
-5. Microsoft SQL Server Express 2019
+# ASP.NET Core Tutorial
+
+A hands-on ASP.NET Core MVC + Razor Pages tutorial, server-rendered (no REST API, no SPA
+frontend), built around **ASP.NET Core Identity** for authentication and **EF Core** over
+**PostgreSQL** for persistence. Originally built on .NET 6 / SQL Server, migrated to
+**.NET 10 (LTS)** and **PostgreSQL**, then containerized with Docker and wired to a GitHub
+Actions CI pipeline.
+
+The data model follows this schema: `categories` -> `products` -> `orders` <- `customers`.
+
+Repository: https://github.com/EdgarEldy/aspnet_core_tutorial
+
+> This README is the living reference for the project's state and remaining work (see
+> [Roadmap](#roadmap)).
+
+## Table of contents
+
+- [Tech stack](#tech-stack)
+- [Data model](#data-model)
+- [Branching strategy](#branching-strategy)
+- [Project structure](#project-structure)
+- [feature/core-architecture](#featurecore-architecture)
+- [feature/products](#featureproducts)
+- [feature/customers](#featurecustomers)
+- [feature/orders](#featureorders)
+- [feature/auth](#featureauth)
+- [Roadmap](#roadmap)
+- [Getting started](#getting-started)
+- [Further reading](#further-reading)
+
+## Tech stack
+
+| Component | Choice |
+|---|---|
+| Framework | ASP.NET Core MVC + Razor Pages |
+| Language | C# / .NET 10 (LTS) |
+| Rendering | Server-rendered views (Razor), no REST API layer |
+| Database | PostgreSQL 16 |
+| ORM | Entity Framework Core 10 (Npgsql provider) |
+| Authentication | ASP.NET Core Identity (cookie-based) |
+| Containerization | Docker (multi-stage, non-root runtime user), docker-compose |
+| Database administration | pgAdmin, run externally (not part of docker-compose) |
+| CI/CD | GitHub Actions |
+| Image security | Trivy (container vulnerability scanning) |
+
+## Data model
+
+```
+categories (Id, CategoryName, CreatedAt, UpdatedAt)
+    |  1
+    |
+    |  N
+products (Id, CategoryId, ProductName, UnitPrice, CreatedAt, UpdatedAt)
+    |  1
+    |
+    |  N
+orders (Id, CustomerId, ProductId, Quantity, Total, CreatedAt, UpdatedAt)
+    |  N
+    |
+    |  1
+customers (Id, FirstName, LastName, Telephone, Email, Address, CreatedAt, UpdatedAt)
+```
+
+`Order.CustomerId` and `Order.ProductId` are nullable foreign keys in the current model
+(`Models/Order.cs`), so an order can technically exist without a resolved customer or product
+at the database level; `OrdersController` enforces both as required at the application layer
+(see [feature/orders](#featureorders)).
+
+ASP.NET Core Identity adds its own schema alongside these tables (`AspNetUsers`, `AspNetRoles`,
+`AspNetUserRoles`, etc.), managed by `ApplicationDbContext : IdentityDbContext` in
+`Data/ApplicationDbContext.cs` and applied through the same EF Core migrations.
+
+### Column details
+
+**Category** (`Models/Category.cs`)
+| Column | Type | Constraints |
+|---|---|---|
+| Id | int | PK, identity |
+| CategoryName | varchar(100) | |
+| CreatedAt | timestamp | |
+| UpdatedAt | timestamp | |
+
+**Product** (`Models/Product.cs`)
+| Column | Type | Constraints |
+|---|---|---|
+| Id | int | PK, identity |
+| CategoryId | int? | FK -> Categories.Id, nullable |
+| ProductName | varchar(100) | |
+| UnitPrice | double | |
+| CreatedAt | timestamp | |
+| UpdatedAt | timestamp | |
+
+**Customer** (`Models/Customer.cs`)
+| Column | Type | Constraints |
+|---|---|---|
+| Id | int | PK, identity |
+| FirstName | varchar(255) | |
+| LastName | varchar(255) | |
+| Telephone | varchar(50) | |
+| Email | varchar(255) | |
+| Address | varchar(255) | |
+| CreatedAt | timestamp | |
+| UpdatedAt | timestamp | |
+
+**Order** (`Models/Order.cs`)
+| Column | Type | Constraints |
+|---|---|---|
+| Id | int | PK, identity |
+| CustomerId | int? | FK -> Customers.Id, nullable |
+| ProductId | int? | FK -> Products.Id, nullable |
+| Quantity | int | |
+| Total | double | |
+| CreatedAt | timestamp | |
+| UpdatedAt | timestamp | |
+
+## Branching strategy
+
+| Branch | Role |
+|---|---|
+| `master` | Stable branch, integration target once `develop` is validated. |
+| `develop` | Integration branch for feature work merged after `master` was still on .NET 6 / SQL Server. |
+| `feature/migration-dotnet10-postgres` | One-time migration branch (the .NET 6 -> .NET 10, SQL Server -> PostgreSQL swap). Branched from `feature/config`. |
+| `feature/core-architecture` | Continues directly from `feature/migration-dotnet10-postgres`: technical foundation for the modernized stack (Docker, docker-compose, CI). Named after the equivalent branch in the sibling `spring-boot-tutorial` project, since it plays the same role: architecture/infrastructure skeleton merged first, before feature branches. |
+| `feature/config`, `feature/templating`, `feature/data-modeling` | Pre-migration tutorial branches (configuration, Razor layout, initial data modeling), already merged into `develop`/`master` before the .NET 10 / PostgreSQL migration started. |
+| `feature/products` | `Category` and `Product` CRUD, built on `feature/core-architecture`. The former `feature/categories` branch was merged into it and retired: its pre-migration history never diverged from `feature/products`, so keeping both was redundant. |
+| `feature/customers` | `Customer` CRUD, built on `feature/products` per the plan's chained-branch topology. Its schema was aligned to the project's canonical `customers` table (dropped an unplanned `Pays`/country column, renamed `Tel` to `Telephone`). |
+| `feature/orders` | `Order` CRUD, built on `feature/customers` per the plan's chained-branch topology. |
+| `feature/auth` | Role-based authorization, built on `develop` once `feature/customers`/`feature/orders` merged. The original pre-migration `feature/auth` branch (base of the branch history, ASP.NET Core Identity wiring) was already fully absorbed into `develop` before this work started. |
+
+See `MIGRATION_LOG.md` for the full branch dependency graph, the merge order used to reconcile
+pre-migration branches with the .NET 10 / PostgreSQL base, and how that analysis was actually
+carried out.
+
+## Project structure
+
+```
+aspnet_core_tutorial/
+├── Areas/
+│   └── Identity/
+│       ├── IdentityHostingStartup.cs
+│       └── Pages/
+│           └── Account/ (Login, Register, scaffolded ASP.NET Core Identity UI)
+├── Controllers/
+│   ├── HomeController.cs
+│   ├── CategoriesController.cs
+│   ├── ProductsController.cs
+│   ├── CustomersController.cs
+│   └── OrdersController.cs
+├── Data/
+│   └── ApplicationDbContext.cs      (IdentityDbContext + Category/Product/Customer/Order DbSets)
+├── Infrastructure/
+│   └── GlobalExceptionHandler.cs    (IExceptionHandler, logs every unhandled exception)
+├── Migrations/                      (EF Core migrations, PostgreSQL/Npgsql-native)
+├── Models/
+│   ├── Category.cs
+│   ├── Product.cs
+│   ├── Customer.cs
+│   ├── Order.cs
+│   ├── PaginatedList.cs             (generic pagination helper used by list views)
+│   └── ErrorViewModel.cs
+├── Seeders/                         (static Seed(app) methods called from Program.cs at startup)
+├── Views/
+│   ├── Home/
+│   ├── Categories/
+│   ├── Products/
+│   ├── Customers/
+│   ├── Orders/
+│   ├── Layouts/
+│   ├── Partials/
+│   └── Shared/
+├── wwwroot/                         (static assets: css, js, fonts)
+├── .github/
+│   └── workflows/
+│       └── ci.yml
+├── Dockerfile                       (multi-stage: SDK 10 build, ASP.NET 10 runtime, non-root user)
+├── docker-compose.yml               (app + postgres)
+├── .dockerignore
+├── .env.example                     (placeholder values, copy to .env for local use)
+├── appsettings.json
+├── appsettings.Development.json
+├── aspnet_core_tutorial.csproj
+├── MIGRATION_LOG.md                 (account of how Etapes 0-2 were actually executed)
+└── README.md
+```
+
+`Category`, `Product`, `Customer`, and `Order` all have full CRUD (controllers, views, seeders).
+
+## feature/core-architecture
+
+Technical foundation for the modernized stack: .NET 10 / PostgreSQL migration, containerization,
+and CI, merged first so every subsequent feature branch builds on a working, tested base.
+
+### Tasks
+
+- [x] Etape 0: reconcile the pre-migration branch topology, create
+  `feature/migration-dotnet10-postgres` from `feature/config` (see `MIGRATION_LOG.md`)
+- [x] Etape 1: upgrade to `.NET 10`, enable `Nullable`/`ImplicitUsings`, update every
+  `Microsoft.AspNetCore.*`/`Microsoft.EntityFrameworkCore.*` package to its current 10.x version
+- [x] Etape 2: replace `Microsoft.EntityFrameworkCore.SqlServer`/`.Sqlite` with
+  `Npgsql.EntityFrameworkCore.PostgreSQL`, update `Program.cs` (`UseNpgsql`), regenerate
+  `Migrations/` from scratch against PostgreSQL
+- [x] Etape 3: multi-stage `Dockerfile` (SDK 10 build stage, ASP.NET 10 runtime stage, non-root
+  `app` user), `.dockerignore`, `docker-compose.yml` (`app` + `postgres`, `.env`/`.env.example`
+  for secrets, `pg_isready` healthcheck, `depends_on: condition: service_healthy`)
+- [x] Etape 6 (anticipated): `.github/workflows/ci.yml` — build job (restore + build in Release,
+  NuGet cache via `setup-dotnet`, a `postgres:16` service matching `docker-compose.yml`'s image
+  and variable names for the future integration-test job), `docker-build` job (`docker build .`),
+  `docker-scan` job (Trivy, fails the build on CRITICAL/HIGH vulnerabilities)
+- [x] Branch README section explaining the configuration choices (this section)
+
+### Configuration notes
+
+- **Database administration stays outside docker-compose.** `docker-compose.yml` only declares
+  `app` and `postgres`; pgAdmin (or any PostgreSQL client) is run externally, pointed at the
+  published `postgres` port, so there's no extra admin UI service to maintain credentials for.
+- **Secrets never hardcoded.** `docker-compose.yml` interpolates every credential from `.env`
+  (`${POSTGRES_DB}`, `${POSTGRES_USER}`, `${POSTGRES_PASSWORD}`), which is git-ignored;
+  `.env.example` documents the same keys with placeholder/empty values. In CI, the equivalent
+  values are sourced from GitHub Actions secrets (`${{ secrets.CI_POSTGRES_PASSWORD }}`), never
+  inlined in `ci.yml`.
+- **Non-root runtime user reuses the base image's built-in account.** The
+  `mcr.microsoft.com/dotnet/aspnet:10.0` image ships a dedicated non-root `app` user since
+  .NET 8; the `Dockerfile` reuses it (`USER app`) instead of creating a new one, avoiding
+  uid/gid collisions with accounts already present in the base image.
+- **`postgres` healthcheck gates `app` startup.** `docker-compose.yml`'s `app` service depends on
+  `postgres` with `condition: service_healthy` (backed by `pg_isready`), not just container
+  start order, so the app never races PostgreSQL's initialization.
+- **CI's `postgres:16` service is declared but not yet consumed by a real test job.** Etapes 4-5
+  (unit/integration tests) don't exist on this branch yet. The service is still wired up now,
+  with the exact same image and `POSTGRES_DB`/`POSTGRES_USER`/`POSTGRES_PASSWORD` variable names
+  as `docker-compose.yml`, so local Docker and CI never drift into two different Postgres
+  configurations, and adding the `integration-test` job later is a drop-in change rather than a
+  redesign. `POSTGRES_HOST_AUTH_METHOD: trust` lets the service container start even before the
+  `CI_POSTGRES_PASSWORD` secret is configured in the repository; it only applies to this
+  ephemeral, network-isolated CI container, never to `docker-compose.yml`.
+- **CI jobs stay granular.** `build`, `docker-build`, and `docker-scan` are separate jobs
+  (`docker-build`/`docker-scan` chained via `needs:`) so a failure is easy to attribute to a
+  single stage; `test`/`integration-test` jobs are intentionally left out until Etapes 4-5 add
+  real test projects, rather than referencing projects that don't exist yet.
+
+## feature/products
+
+`Category` and `Product` CRUD, built directly on `feature/core-architecture`. Originally split
+into a separate `feature/categories` branch (the pre-migration tutorial history for the two
+entities never actually diverged from each other), merged into `feature/products` and retired
+once confirmed fully redundant.
+
+### Tasks
+
+- [x] `CategoriesController`: full CRUD (`Index`, `Create`, `Edit`, `Delete`) - already complete
+  from the pre-migration branch, re-validated against PostgreSQL
+- [x] `ProductsController`: completed the missing `Create` (POST), `Edit`, and `Delete` actions -
+  only `Index` and a `Create` GET existed before, so the create form had nothing to submit to and
+  there was no way to update or remove a product
+- [x] Fixed a startup crash: the seeders wrote `DateTime.Now` (`Kind=Local`) into `timestamp with
+  time zone` columns, which Npgsql rejects outright - switched to `DateTime.UtcNow`
+- [x] Search and pagination on both list views (`PaginatedList<T>` helper, `AsNoTracking()` since
+  the lists are read-only), anticipated from Etape 7 for the same reason as
+  `feature/core-architecture`'s cross-cutting items
+- [x] Etape 4/5 test coverage for everything above: 50 unit tests (InMemory) plus 30 integration
+  tests (real Postgres via Testcontainers, real antiforgery tokens, no bypasses) - 80 tests, full
+  suite runs in well under a minute
+
+### Configuration notes
+
+- **`PaginatedList<T>`** (`Models/PaginatedList.cs`) is a thin `List<T>` subclass carrying
+  `PageIndex`/`TotalPages`, following the standard ASP.NET Core MVC pagination pattern - no
+  external paging library needed for a page count this small.
+- **Search is a simple `Contains()` filter** on `CategoryName`/`ProductName`, applied before
+  `OrderBy` and pagination so the count and page split are computed against the filtered set, not
+  the full table.
+- **All list/detail reads use `AsNoTracking()`**; only the single entity fetched in `Edit`/`Delete`
+  before a write stays tracked.
+
+## feature/customers
+
+`Customer` CRUD, built directly on `feature/products` per the plan's chained-branch topology
+(`feature/customers` -> `feature/products` -> `feature/core-architecture`).
+
+### Tasks
+
+- [x] Aligned `Models/Customer.cs` to the project's canonical `customers` schema: dropped an
+  unplanned `Pays` (country) column that had been added speculatively, renamed `Tel` to
+  `Telephone`, resized `FirstName`/`LastName`/`Email`/`Address` to `varchar(255)` and `Telephone`
+  to `varchar(50)` - via a data-preserving `RenameColumn` migration, not a drop-and-recreate
+- [x] `CustomersController`: full CRUD (`Index`, `Create`, `Edit`, `Delete`), mirroring the
+  `CategoriesController`/`ProductsController` pattern exactly (fetch-then-patch on `Edit` to
+  preserve `CreatedAt`, `AsNoTracking()` on reads)
+- [x] Search and pagination on the `Index` view (`PaginatedList<T>`, filtering on
+  `FirstName`/`LastName`)
+- [x] Etape 4/5 test coverage: 15 unit tests (InMemory) plus 12 integration tests (real Postgres
+  via Testcontainers, real antiforgery tokens) - all green alongside the existing suite
+
+### Configuration notes
+
+- **Schema followed the canonical `customers` table, not the earlier speculative `Pays`
+  addition.** A `Pays` column had been cherry-picked from pre-migration history before the
+  canonical schema was confirmed; once confirmed, it showed no country field, so it was removed
+  and `Tel` was renamed to `Telephone` to match exactly.
+- **The `Tel` -> `Telephone` migration renames rather than drops and recreates the column**, so
+  any pre-existing customer data survives the schema change instead of being lost.
+
+## feature/orders
+
+`Order` CRUD, built directly on `feature/customers` per the plan's chained-branch topology
+(`feature/orders` -> `feature/customers` -> `feature/products` -> `feature/core-architecture`).
+
+### Tasks
+
+- [x] `OrdersController`: full CRUD (`Index`, `Create`, `Edit`, `Delete`), mirroring the
+  established pattern (fetch-then-patch on `Edit` to preserve `CreatedAt`, `AsNoTracking()` on
+  reads)
+- [x] Enforced at the application layer that `CustomerId`/`ProductId` must resolve to a real,
+  still-existing record before an order can be saved, even though both stay nullable at the
+  database level - the gap called out in [Data model](#data-model)
+- [x] `Total` is always computed server-side (`Quantity * Product.UnitPrice`), never trusted from
+  the client
+- [x] Cascading Category -> Product dropdown on Create/Edit: selecting a category loads only that
+  category's products via a `GetProducts` JSON endpoint (AJAX, no page reload); selecting a
+  product fills in a read-only unit price and recalculates the total live
+  (`wwwroot/js/order-form.js`)
+- [x] Search and pagination on the `Index` view (`PaginatedList<T>`, filtering on
+  customer name and product name)
+- [x] Wired the sidebar's Orders/Customers links, previously dead `href="#"` placeholders
+- [x] Etape 4/5 test coverage: 28 unit tests (InMemory) plus 25 integration tests (real Postgres
+  via Testcontainers, real antiforgery tokens) - all green alongside the existing suite
+
+### Configuration notes
+
+- **Category is a UI-only filter, not a field on `Order`.** `Order` has no `CategoryId` of its
+  own; the dropdown exists purely to narrow the Product list. When redisplaying an invalid form,
+  the controller infers which category to preselect from the submitted `ProductId` rather than
+  from any posted category value.
+- **The Unit price/Total inputs on Create/Edit are read-only previews**, never part of the posted
+  form data - the server always recomputes and owns the authoritative `Total` on save, so a
+  tampered client-side value can never persist.
+- **`GetProducts` needs no antiforgery token**: it is a side-effect-free `[HttpGet]` read, exactly
+  like the existing dropdown-population pattern already used for Categories/Products, so it
+  follows the same convention as every other read-only action in this codebase.
+
+## feature/auth
+
+Role-based authorization on top of the already-merged `Categories`/`Products`/`Customers`/`Orders`
+CRUD, built on `develop` (needed all four controllers to exist to protect them).
+
+### Tasks
+
+- [x] Enabled ASP.NET Core Identity role support (`AddRoles<IdentityRole>()`); `ApplicationDbContext`
+  already inherited the Identity role tables, so no new migration was needed
+- [x] `RoleSeeder`: always ensures "Admin"/"User" roles exist; seeds a configured Admin account
+  (`Admin:Email`/`Admin:Password`) if present, skips otherwise rather than hardcoding a fallback
+- [x] `[Authorize(Roles = "Admin")]` on all four controllers: `Categories`/`Products` keep `Index`
+  `[AllowAnonymous]` (a public catalog); `Customers`/`Orders` are fully protected, including
+  `Index`, since they expose personally identifiable information
+- [x] Self-registered accounts are assigned the "User" role automatically; only `RoleSeeder` (via
+  configuration) can ever grant "Admin" - no code path lets a self-registered account become Admin
+- [x] Added the missing `AccessDenied` Razor Page (the cookie config already pointed at it, but the
+  page itself didn't exist, so an authenticated non-Admin would have 404'd)
+- [x] Wired the real Login/Register/Logout partial into the main app's nav (it already existed,
+  scaffolded, but was never included outside the separate Identity-area layout)
+- [x] Hid Create/Edit/Delete links from non-Admin visitors on the public Categories/Products
+  listings (server-side authorization already blocked the actions; this closes the matching UX gap)
+- [x] Etape 4/5 test coverage: 4 unit tests (`RoleSeeder`, InMemory) plus 15 integration tests
+  exercising the real ASP.NET Core authorization middleware (anonymous vs `User` vs `Admin` against
+  both the public catalog and PII controllers), plus fixing the pre-existing Categories/Products/
+  Customers/Orders integration tests to authenticate as Admin now that they require it
+
+### Configuration notes
+
+- **`Admin:Email`/`Admin:Password` follow the same secret-handling convention as the Postgres
+  credentials**: empty placeholders in `appsettings.json`, real values only in the git-ignored
+  `.env`, mapped through `docker-compose.yml` via the `Admin__Email`/`Admin__Password` double-
+  underscore convention ASP.NET Core uses to bind environment variables onto nested config keys.
+- **Customers/Orders are fully gated, Categories/Products are not.** This is a deliberate asymmetry:
+  Customer/Order data is personal information (names, phone, email, address), while a product
+  catalog reads naturally as public. Both still require the Admin role to create/edit/delete.
+- **No self-registration path to Admin.** `Register.cshtml.cs` always assigns "User", never reads
+  a role from the form, and the only other place `AddToRoleAsync` is called with "Admin" is
+  `RoleSeeder`, gated behind server-side configuration the registration form never touches.
+
+## Roadmap
+
+The .NET 10 / PostgreSQL migration and the initial technical foundation are done. This section
+is the living task list for what's left. Check items off as they land, in order, one branch/PR
+per group unless noted otherwise.
+
+### Cross-cutting foundation (anticipated on `feature/core-architecture`, ahead of the original
+plan's Etape 7, to match the sibling `spring-boot-tutorial` project's structure)
+
+- [x] Centralized exception handling middleware, with unhandled-exception logging
+- [x] Structured logging (Serilog: console + rolling file, per-environment levels)
+- [x] `/health` endpoint backed by a real PostgreSQL connection check
+- [x] Swagger / OpenAPI, exposed in dev only
+- [x] `docker-compose.yml`'s `app` service healthcheck wired to `/health`
+
+### Etape 4 - Unit tests
+
+- [x] `aspnet_core_tutorial.UnitTests` project (xUnit, `Microsoft.EntityFrameworkCore.InMemory`)
+- [x] Controller tests (`CategoriesController`, `ProductsController`, `CustomersController`,
+  `OrdersController`, `HomeController`): nominal + error cases (entity not found -> 404)
+- [x] Seeder tests: no duplicate seeding on repeated runs
+- [x] Model validation tests (Data Annotations)
+
+### Etape 5 - Integration tests
+
+- [x] `aspnet_core_tutorial.IntegrationTests` project (`Microsoft.AspNetCore.Mvc.Testing` +
+  `Testcontainers.PostgreSql`, one real ephemeral PostgreSQL container shared for the whole run
+  rather than one per test, so the suite stays fast)
+- [x] Home page renders (200 OK)
+- [x] Full CRUD over HTTP for `Products`, `Categories`, `Customers`, and `Orders`, with the real
+  antiforgery token
+- [x] Authentication redirects (`/Identity/Account/Manage` -> `/Identity/Account/Login` when
+  signed out) and role-based authorization redirects (anonymous -> Login, wrong role ->
+  AccessDenied) across all four business-CRUD controllers (see `feature/auth`)
+- [x] EF Core migrations apply automatically at container startup
+
+### Etape 6 - CI completion
+
+- [ ] Wire the `test`/`integration-test` jobs into `.github/workflows/ci.yml` once the projects
+  above exist (the `build` job's `postgres:16` service is already in place for this)
+- [ ] Publish test results as run summaries/artifacts (`dotnet test --logger trx` + upload, or
+  `dorny/test-reporter`)
+
+### Etape 7 - Remaining hardening
+
+- [ ] Service/repository layer extraction out of controllers
+- [ ] Stronger Data Annotations on `Category`/`Product`/`Customer`/`Order`, surfaced in Razor views
+- [x] Pagination on `Products`/`Categories`/`Customers`/`Orders` lists (see `feature/products`,
+  `feature/customers`, `feature/orders`)
+- [x] Role-based authorization (Admin/User) on all four CRUD controllers, public catalog reads vs.
+  protected writes and PII (see `feature/auth`)
+- [ ] Rate limiting, security headers (`X-Content-Type-Options`, `Content-Security-Policy`),
+  anti-forgery checks on every POST form
+- [ ] `dotnet list package --vulnerable` audit (local and/or CI)
+- [ ] `AsNoTracking()` on read-only queries, response compression, `IMemoryCache` for low-churn
+  data (categories)
+- [ ] Per-environment `appsettings.Staging.json`/`appsettings.Production.json`, plus
+  `docker-compose.override.yml` (dev) and `docker-compose.prod.yml` (prod, minimal exposed ports)
+
+## Getting started
+
+### Prerequisites
+
+- .NET 10 SDK
+- Docker + Docker Compose (for the containerized workflow)
+- A PostgreSQL 16 instance (local install, or via `docker compose up postgres`)
+
+### Local development, without Docker
+
+```bash
+# Restore and build
+dotnet restore
+dotnet build
+
+# Apply EF Core migrations against a local PostgreSQL instance
+# (adjust ConnectionStrings:DefaultConnection in appsettings.json first)
+dotnet ef database update
+
+# Run the app
+dotnet run
+```
+
+### With Docker Compose
+
+```bash
+# One-time setup: copy the example env file and fill in real values
+cp .env.example .env
+
+# Build and start the app + PostgreSQL
+docker compose up --build
+```
+
+The app is served on `http://localhost:8084`. To inspect the database, point an externally-run
+pgAdmin (or any PostgreSQL client) at `localhost:5433` with the credentials from `.env`.
+
+### Validating the setup
+
+```bash
+# Catch YAML/interpolation errors in docker-compose.yml without starting containers
+docker compose config
+
+# Validate the Dockerfile builds end to end
+docker build .
+```
+
+## Further reading
+
+- `MIGRATION_LOG.md` - a detailed account of how the .NET 10 upgrade, the PostgreSQL swap, and
+  the branch topology reconciliation were actually executed, including the pitfalls found along
+  the way (e.g. a `.gitignore` rule silently excluding `Migrations/` from version control).
