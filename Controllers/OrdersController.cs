@@ -64,6 +64,7 @@ namespace aspnet_core_tutorial.Controllers
         // GET: Orders/GetProducts?categoryId=5
         // Backs the Create/Edit views' cascading Category -> Product dropdown: the page calls
         // this via AJAX whenever the selected category changes, without a full page reload.
+        [HttpGet]
         public async Task<JsonResult> GetProducts(int? categoryId)
         {
             var products = _context.Products.AsNoTracking().AsQueryable();
