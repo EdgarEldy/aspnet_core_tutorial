@@ -61,6 +61,24 @@ namespace aspnet_core_tutorial.Controllers
             return View();
         }
 
+        // GET: Orders/GetProducts?categoryId=5
+        // Backs the Create/Edit views' cascading Category -> Product dropdown: the page calls
+        // this via AJAX whenever the selected category changes, without a full page reload.
+        public async Task<JsonResult> GetProducts(int? categoryId)
+        {
+            var products = _context.Products.AsNoTracking().AsQueryable();
+            if (categoryId.HasValue)
+            {
+                products = products.Where(p => p.CategoryId == categoryId);
+            }
+
+            var result = await products
+                .OrderBy(p => p.ProductName)
+                .Select(p => new { id = p.Id, productName = p.ProductName, unitPrice = p.UnitPrice })
+                .ToListAsync();
+            return Json(result);
+        }
+
         // POST: Orders/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -80,7 +98,7 @@ namespace aspnet_core_tutorial.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            await PopulateDropDownsAsync(order.CustomerId, order.ProductId);
+            await PopulateDropDownsAsync(order.CustomerId, order.ProductId, await ResolveCategoryIdAsync(order.ProductId));
             return View(order);
         }
 
@@ -92,13 +110,13 @@ namespace aspnet_core_tutorial.Controllers
                 return NotFound();
             }
 
-            var order = await _context.Orders.FindAsync(id);
+            var order = await _context.Orders.Include(o => o.Product).FirstOrDefaultAsync(o => o.Id == id);
             if (order == null)
             {
                 return NotFound();
             }
 
-            await PopulateDropDownsAsync(order.CustomerId, order.ProductId);
+            await PopulateDropDownsAsync(order.CustomerId, order.ProductId, order.Product?.CategoryId);
             return View(order);
         }
 
@@ -148,7 +166,7 @@ namespace aspnet_core_tutorial.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            await PopulateDropDownsAsync(order.CustomerId, order.ProductId);
+            await PopulateDropDownsAsync(order.CustomerId, order.ProductId, await ResolveCategoryIdAsync(order.ProductId));
             return View(order);
         }
 
@@ -220,10 +238,15 @@ namespace aspnet_core_tutorial.Controllers
             }
         }
 
-        // Customers/Products dropdowns for Create/Edit views. Awaited explicitly (ToListAsync)
-        // rather than handing SelectList a raw IQueryable, which would enumerate it synchronously
-        // and block inside these async actions.
-        private async Task PopulateDropDownsAsync(int? selectedCustomerId = null, int? selectedProductId = null)
+        // Customers/Categories/Products dropdowns for Create/Edit views. Awaited explicitly
+        // (ToListAsync) rather than handing SelectList a raw IQueryable, which would enumerate it
+        // synchronously and block inside these async actions.
+        //
+        // The Product dropdown is seeded here only for the initial server-rendered page (a
+        // category already selected on Edit, or none yet on Create); once the page has loaded,
+        // the Create/Edit views' own script repopulates it via GetProducts whenever the Category
+        // selection changes, without a full page reload.
+        private async Task PopulateDropDownsAsync(int? selectedCustomerId = null, int? selectedProductId = null, int? selectedCategoryId = null)
         {
             var customers = await _context.Customers
                 .AsNoTracking()
@@ -232,8 +255,30 @@ namespace aspnet_core_tutorial.Controllers
                 .ToListAsync();
             ViewData["CustomerId"] = new SelectList(customers, "Id", "FullName", selectedCustomerId);
 
-            var products = await _context.Products.AsNoTracking().OrderBy(p => p.ProductName).ToListAsync();
-            ViewData["ProductId"] = new SelectList(products, "Id", "ProductName", selectedProductId);
+            var categories = await _context.Categories.AsNoTracking().OrderBy(c => c.CategoryName).ToListAsync();
+            ViewData["CategoryId"] = new SelectList(categories, "Id", "CategoryName", selectedCategoryId);
+
+            var products = _context.Products.AsNoTracking().AsQueryable();
+            if (selectedCategoryId.HasValue)
+            {
+                products = products.Where(p => p.CategoryId == selectedCategoryId);
+            }
+            var productList = await products.OrderBy(p => p.ProductName).ToListAsync();
+            ViewData["ProductId"] = new SelectList(productList, "Id", "ProductName", selectedProductId);
+        }
+
+        // Infers the category to preselect when redisplaying an invalid form: the submitted
+        // ProductId is the only signal available, since Category is a UI-only filter that never
+        // gets bound onto the Order model itself.
+        private async Task<int?> ResolveCategoryIdAsync(int? productId)
+        {
+            if (productId == null)
+            {
+                return null;
+            }
+
+            var product = await _context.Products.AsNoTracking().FirstOrDefaultAsync(p => p.Id == productId);
+            return product?.CategoryId;
         }
     }
 }
