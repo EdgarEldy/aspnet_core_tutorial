@@ -3,6 +3,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using aspnet_core_tutorial.Data;
 using aspnet_core_tutorial.Models;
+using aspnet_core_tutorial.Seeders;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -18,6 +20,7 @@ namespace aspnet_core_tutorial.Controllers
     /// Date : 7/31/26
     /// Project : aspnet_core_tutorial
     /// </remarks>
+    [Authorize(Roles = RoleSeeder.Admin)]
     public class CustomersController : Controller
     {
         private const int PageSize = 10;
