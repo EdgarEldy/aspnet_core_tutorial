@@ -22,6 +22,7 @@ Repository: https://github.com/EdgarEldy/aspnet_core_tutorial
 - [feature/core-architecture](#featurecore-architecture)
 - [feature/products](#featureproducts)
 - [feature/customers](#featurecustomers)
+- [feature/orders](#featureorders)
 - [Roadmap](#roadmap)
 - [Getting started](#getting-started)
 - [Further reading](#further-reading)
@@ -61,8 +62,8 @@ customers (Id, FirstName, LastName, Telephone, Email, Address, CreatedAt, Update
 
 `Order.CustomerId` and `Order.ProductId` are nullable foreign keys in the current model
 (`Models/Order.cs`), so an order can technically exist without a resolved customer or product
-at the database level; the business rule enforcing both at the application layer is expected to
-land with the `Products`/`Customers`/`Orders` feature work (see [Roadmap](#roadmap)).
+at the database level; `OrdersController` enforces both as required at the application layer
+(see [feature/orders](#featureorders)).
 
 ASP.NET Core Identity adds its own schema alongside these tables (`AspNetUsers`, `AspNetRoles`,
 `AspNetUserRoles`, etc.), managed by `ApplicationDbContext : IdentityDbContext` in
@@ -122,7 +123,7 @@ ASP.NET Core Identity adds its own schema alongside these tables (`AspNetUsers`,
 | `feature/config`, `feature/templating`, `feature/data-modeling` | Pre-migration tutorial branches (configuration, Razor layout, initial data modeling), already merged into `develop`/`master` before the .NET 10 / PostgreSQL migration started. |
 | `feature/products` | `Category` and `Product` CRUD, built on `feature/core-architecture`. The former `feature/categories` branch was merged into it and retired: its pre-migration history never diverged from `feature/products`, so keeping both was redundant. |
 | `feature/customers` | `Customer` CRUD, built on `feature/products` per the plan's chained-branch topology. Its schema was aligned to the project's canonical `customers` table (dropped an unplanned `Pays`/country column, renamed `Tel` to `Telephone`). |
-| `feature/orders` | Pending: `Order` CRUD, to be built on `feature/customers` once it merges to `develop`. |
+| `feature/orders` | `Order` CRUD, built on `feature/customers` per the plan's chained-branch topology. |
 | `feature/auth` | Pre-migration tutorial branch, base of the original branch history (ASP.NET Core Identity wiring). |
 
 See `MIGRATION_LOG.md` for the full branch dependency graph, the merge order used to reconcile
@@ -142,7 +143,8 @@ aspnet_core_tutorial/
 │   ├── HomeController.cs
 │   ├── CategoriesController.cs
 │   ├── ProductsController.cs
-│   └── CustomersController.cs
+│   ├── CustomersController.cs
+│   └── OrdersController.cs
 ├── Data/
 │   └── ApplicationDbContext.cs      (IdentityDbContext + Category/Product/Customer/Order DbSets)
 ├── Infrastructure/
@@ -161,6 +163,7 @@ aspnet_core_tutorial/
 │   ├── Categories/
 │   ├── Products/
 │   ├── Customers/
+│   ├── Orders/
 │   ├── Layouts/
 │   ├── Partials/
 │   └── Shared/
@@ -179,8 +182,7 @@ aspnet_core_tutorial/
 └── README.md
 ```
 
-`Category`, `Product`, and `Customer` have full CRUD (controllers, views, seeders); `Order` still
-only exists as an EF Core model pending its own `feature/orders` branch per the roadmap below.
+`Category`, `Product`, `Customer`, and `Order` all have full CRUD (controllers, views, seeders).
 
 ## feature/core-architecture
 
@@ -297,6 +299,44 @@ once confirmed fully redundant.
 - **The `Tel` -> `Telephone` migration renames rather than drops and recreates the column**, so
   any pre-existing customer data survives the schema change instead of being lost.
 
+## feature/orders
+
+`Order` CRUD, built directly on `feature/customers` per the plan's chained-branch topology
+(`feature/orders` -> `feature/customers` -> `feature/products` -> `feature/core-architecture`).
+
+### Tasks
+
+- [x] `OrdersController`: full CRUD (`Index`, `Create`, `Edit`, `Delete`), mirroring the
+  established pattern (fetch-then-patch on `Edit` to preserve `CreatedAt`, `AsNoTracking()` on
+  reads)
+- [x] Enforced at the application layer that `CustomerId`/`ProductId` must resolve to a real,
+  still-existing record before an order can be saved, even though both stay nullable at the
+  database level - the gap called out in [Data model](#data-model)
+- [x] `Total` is always computed server-side (`Quantity * Product.UnitPrice`), never trusted from
+  the client
+- [x] Cascading Category -> Product dropdown on Create/Edit: selecting a category loads only that
+  category's products via a `GetProducts` JSON endpoint (AJAX, no page reload); selecting a
+  product fills in a read-only unit price and recalculates the total live
+  (`wwwroot/js/order-form.js`)
+- [x] Search and pagination on the `Index` view (`PaginatedList<T>`, filtering on
+  customer name and product name)
+- [x] Wired the sidebar's Orders/Customers links, previously dead `href="#"` placeholders
+- [x] Etape 4/5 test coverage: 28 unit tests (InMemory) plus 25 integration tests (real Postgres
+  via Testcontainers, real antiforgery tokens) - all green alongside the existing suite
+
+### Configuration notes
+
+- **Category is a UI-only filter, not a field on `Order`.** `Order` has no `CategoryId` of its
+  own; the dropdown exists purely to narrow the Product list. When redisplaying an invalid form,
+  the controller infers which category to preselect from the submitted `ProductId` rather than
+  from any posted category value.
+- **The Unit price/Total inputs on Create/Edit are read-only previews**, never part of the posted
+  form data - the server always recomputes and owns the authoritative `Total` on save, so a
+  tampered client-side value can never persist.
+- **`GetProducts` needs no antiforgery token**: it is a side-effect-free `[HttpGet]` read, exactly
+  like the existing dropdown-population pattern already used for Categories/Products, so it
+  follows the same convention as every other read-only action in this codebase.
+
 ## Roadmap
 
 The .NET 10 / PostgreSQL migration and the initial technical foundation are done. This section
@@ -316,7 +356,7 @@ plan's Etape 7, to match the sibling `spring-boot-tutorial` project's structure)
 
 - [x] `aspnet_core_tutorial.UnitTests` project (xUnit, `Microsoft.EntityFrameworkCore.InMemory`)
 - [x] Controller tests (`CategoriesController`, `ProductsController`, `CustomersController`,
-  `HomeController`): nominal + error cases (entity not found -> 404)
+  `OrdersController`, `HomeController`): nominal + error cases (entity not found -> 404)
 - [x] Seeder tests: no duplicate seeding on repeated runs
 - [x] Model validation tests (Data Annotations)
 
@@ -326,8 +366,8 @@ plan's Etape 7, to match the sibling `spring-boot-tutorial` project's structure)
   `Testcontainers.PostgreSql`, one real ephemeral PostgreSQL container shared for the whole run
   rather than one per test, so the suite stays fast)
 - [x] Home page renders (200 OK)
-- [x] Full CRUD over HTTP for `Products`, `Categories`, and `Customers`, with the real antiforgery
-  token
+- [x] Full CRUD over HTTP for `Products`, `Categories`, `Customers`, and `Orders`, with the real
+  antiforgery token
 - [x] Authentication redirects (`/Identity/Account/Manage` -> `/Identity/Account/Login` when
   signed out; `Categories`/`Products` carry no `[Authorize]` yet, so there's no business-CRUD
   redirect case to test until that lands)
@@ -344,8 +384,8 @@ plan's Etape 7, to match the sibling `spring-boot-tutorial` project's structure)
 
 - [ ] Service/repository layer extraction out of controllers
 - [ ] Stronger Data Annotations on `Category`/`Product`/`Customer`/`Order`, surfaced in Razor views
-- [x] Pagination on `Products`/`Categories` lists (see `feature/products`); still needed on `Orders`
-  once that entity's CRUD lands
+- [x] Pagination on `Products`/`Categories`/`Customers`/`Orders` lists (see `feature/products`,
+  `feature/customers`, `feature/orders`)
 - [ ] Rate limiting, security headers (`X-Content-Type-Options`, `Content-Security-Policy`),
   anti-forgery checks on every POST form
 - [ ] `dotnet list package --vulnerable` audit (local and/or CI)
