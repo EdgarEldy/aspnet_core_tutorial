@@ -8,6 +8,16 @@ using Microsoft.EntityFrameworkCore;
 
 namespace aspnet_core_tutorial.Controllers
 {
+    /// <summary>
+    /// Handles CRUD operations for <see cref="Customer"/> records: listing with search and
+    /// pagination, creation, editing, and deletion.
+    /// </summary>
+    /// <remarks>
+    /// Created by edgar.muhamyangabo on 7/31/26
+    /// Author : edgar.muhamyangabo
+    /// Date : 7/31/26
+    /// Project : aspnet_core_tutorial
+    /// </remarks>
     public class CustomersController : Controller
     {
         private const int PageSize = 10;
