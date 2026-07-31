@@ -19,23 +19,20 @@ namespace aspnet_core_tutorial.Models
         [Key]
         public int Id { get; set; }
 
-        [Column(TypeName = "varchar(100)")]
+        [Column(TypeName = "varchar(255)")]
         public string FirstName { get; set; } = string.Empty;
 
-        [Column(TypeName = "varchar(100)")]
+        [Column(TypeName = "varchar(255)")]
         public string LastName { get; set; } = string.Empty;
 
-        [Column(TypeName = "varchar(100)")]
-        public string Tel { get; set; } = string.Empty;
+        [Column(TypeName = "varchar(50)")]
+        public string Telephone { get; set; } = string.Empty;
 
-        [Column(TypeName = "varchar(100)")]
+        [Column(TypeName = "varchar(255)")]
         public string Email { get; set; } = string.Empty;
 
-        [Column(TypeName = "varchar(100)")]
+        [Column(TypeName = "varchar(255)")]
         public string Address { get; set; } = string.Empty;
-
-        [Column(TypeName = "varchar(100)")]
-        public string Pays { get; set; } = string.Empty;
 
         public DateTime CreatedAt { get; set; }
 
