@@ -21,6 +21,7 @@ Repository: https://github.com/EdgarEldy/aspnet_core_tutorial
 - [Project structure](#project-structure)
 - [feature/core-architecture](#featurecore-architecture)
 - [feature/products](#featureproducts)
+- [feature/customers](#featurecustomers)
 - [Roadmap](#roadmap)
 - [Getting started](#getting-started)
 - [Further reading](#further-reading)
@@ -55,7 +56,7 @@ orders (Id, CustomerId, ProductId, Quantity, Total, CreatedAt, UpdatedAt)
     |  N
     |
     |  1
-customers (Id, FirstName, LastName, Tel, Email, Address, CreatedAt, UpdatedAt)
+customers (Id, FirstName, LastName, Telephone, Email, Address, CreatedAt, UpdatedAt)
 ```
 
 `Order.CustomerId` and `Order.ProductId` are nullable foreign keys in the current model
@@ -91,11 +92,11 @@ ASP.NET Core Identity adds its own schema alongside these tables (`AspNetUsers`,
 | Column | Type | Constraints |
 |---|---|---|
 | Id | int | PK, identity |
-| FirstName | varchar(100) | |
-| LastName | varchar(100) | |
-| Tel | varchar(100) | |
-| Email | varchar(100) | |
-| Address | varchar(100) | |
+| FirstName | varchar(255) | |
+| LastName | varchar(255) | |
+| Telephone | varchar(50) | |
+| Email | varchar(255) | |
+| Address | varchar(255) | |
 | CreatedAt | timestamp | |
 | UpdatedAt | timestamp | |
 
@@ -120,7 +121,8 @@ ASP.NET Core Identity adds its own schema alongside these tables (`AspNetUsers`,
 | `feature/core-architecture` | Continues directly from `feature/migration-dotnet10-postgres`: technical foundation for the modernized stack (Docker, docker-compose, CI). Named after the equivalent branch in the sibling `spring-boot-tutorial` project, since it plays the same role: architecture/infrastructure skeleton merged first, before feature branches. |
 | `feature/config`, `feature/templating`, `feature/data-modeling` | Pre-migration tutorial branches (configuration, Razor layout, initial data modeling), already merged into `develop`/`master` before the .NET 10 / PostgreSQL migration started. |
 | `feature/products` | `Category` and `Product` CRUD, built on `feature/core-architecture`. The former `feature/categories` branch was merged into it and retired: its pre-migration history never diverged from `feature/products`, so keeping both was redundant. |
-| `feature/customers`, `feature/orders` | Pre-migration tutorial branches for the remaining entities, to be reconciled with `feature/products` the same way. |
+| `feature/customers` | `Customer` CRUD, built on `feature/products` per the plan's chained-branch topology. Its schema was aligned to the project's canonical `customers` table (dropped an unplanned `Pays`/country column, renamed `Tel` to `Telephone`). |
+| `feature/orders` | Pending: `Order` CRUD, to be built on `feature/customers` once it merges to `develop`. |
 | `feature/auth` | Pre-migration tutorial branch, base of the original branch history (ASP.NET Core Identity wiring). |
 
 See `MIGRATION_LOG.md` for the full branch dependency graph, the merge order used to reconcile
@@ -139,7 +141,8 @@ aspnet_core_tutorial/
 ├── Controllers/
 │   ├── HomeController.cs
 │   ├── CategoriesController.cs
-│   └── ProductsController.cs
+│   ├── ProductsController.cs
+│   └── CustomersController.cs
 ├── Data/
 │   └── ApplicationDbContext.cs      (IdentityDbContext + Category/Product/Customer/Order DbSets)
 ├── Infrastructure/
@@ -157,6 +160,7 @@ aspnet_core_tutorial/
 │   ├── Home/
 │   ├── Categories/
 │   ├── Products/
+│   ├── Customers/
 │   ├── Layouts/
 │   ├── Partials/
 │   └── Shared/
@@ -175,8 +179,8 @@ aspnet_core_tutorial/
 └── README.md
 ```
 
-`Category` and `Product` have full CRUD (controllers, views, seeders); `Customer` and `Order`
-still only exist as EF Core models pending their own `feature/*` branches per the roadmap below.
+`Category`, `Product`, and `Customer` have full CRUD (controllers, views, seeders); `Order` still
+only exists as an EF Core model pending its own `feature/orders` branch per the roadmap below.
 
 ## feature/core-architecture
 
@@ -265,6 +269,34 @@ once confirmed fully redundant.
 - **All list/detail reads use `AsNoTracking()`**; only the single entity fetched in `Edit`/`Delete`
   before a write stays tracked.
 
+## feature/customers
+
+`Customer` CRUD, built directly on `feature/products` per the plan's chained-branch topology
+(`feature/customers` -> `feature/products` -> `feature/core-architecture`).
+
+### Tasks
+
+- [x] Aligned `Models/Customer.cs` to the project's canonical `customers` schema: dropped an
+  unplanned `Pays` (country) column that had been added speculatively, renamed `Tel` to
+  `Telephone`, resized `FirstName`/`LastName`/`Email`/`Address` to `varchar(255)` and `Telephone`
+  to `varchar(50)` - via a data-preserving `RenameColumn` migration, not a drop-and-recreate
+- [x] `CustomersController`: full CRUD (`Index`, `Create`, `Edit`, `Delete`), mirroring the
+  `CategoriesController`/`ProductsController` pattern exactly (fetch-then-patch on `Edit` to
+  preserve `CreatedAt`, `AsNoTracking()` on reads)
+- [x] Search and pagination on the `Index` view (`PaginatedList<T>`, filtering on
+  `FirstName`/`LastName`)
+- [x] Etape 4/5 test coverage: 15 unit tests (InMemory) plus 12 integration tests (real Postgres
+  via Testcontainers, real antiforgery tokens) - all green alongside the existing suite
+
+### Configuration notes
+
+- **Schema followed the canonical `customers` table, not the earlier speculative `Pays`
+  addition.** A `Pays` column had been cherry-picked from pre-migration history before the
+  canonical schema was confirmed; once confirmed, it showed no country field, so it was removed
+  and `Tel` was renamed to `Telephone` to match exactly.
+- **The `Tel` -> `Telephone` migration renames rather than drops and recreates the column**, so
+  any pre-existing customer data survives the schema change instead of being lost.
+
 ## Roadmap
 
 The .NET 10 / PostgreSQL migration and the initial technical foundation are done. This section
@@ -283,8 +315,8 @@ plan's Etape 7, to match the sibling `spring-boot-tutorial` project's structure)
 ### Etape 4 - Unit tests
 
 - [x] `aspnet_core_tutorial.UnitTests` project (xUnit, `Microsoft.EntityFrameworkCore.InMemory`)
-- [x] Controller tests (`CategoriesController`, `ProductsController`, `HomeController`): nominal +
-  error cases (entity not found -> 404)
+- [x] Controller tests (`CategoriesController`, `ProductsController`, `CustomersController`,
+  `HomeController`): nominal + error cases (entity not found -> 404)
 - [x] Seeder tests: no duplicate seeding on repeated runs
 - [x] Model validation tests (Data Annotations)
 
@@ -294,7 +326,8 @@ plan's Etape 7, to match the sibling `spring-boot-tutorial` project's structure)
   `Testcontainers.PostgreSql`, one real ephemeral PostgreSQL container shared for the whole run
   rather than one per test, so the suite stays fast)
 - [x] Home page renders (200 OK)
-- [x] Full CRUD over HTTP for `Products` and `Categories`, with the real antiforgery token
+- [x] Full CRUD over HTTP for `Products`, `Categories`, and `Customers`, with the real antiforgery
+  token
 - [x] Authentication redirects (`/Identity/Account/Manage` -> `/Identity/Account/Login` when
   signed out; `Categories`/`Products` carry no `[Authorize]` yet, so there's no business-CRUD
   redirect case to test until that lands)
