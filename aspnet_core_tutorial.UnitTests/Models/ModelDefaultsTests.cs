@@ -41,7 +41,7 @@ public class ModelDefaultsTests
 
         Assert.Equal(string.Empty, customer.FirstName);
         Assert.Equal(string.Empty, customer.LastName);
-        Assert.Equal(string.Empty, customer.Tel);
+        Assert.Equal(string.Empty, customer.Telephone);
         Assert.Equal(string.Empty, customer.Email);
         Assert.Equal(string.Empty, customer.Address);
         Assert.True(Validator.TryValidateObject(customer, new ValidationContext(customer), validationResults: null, validateAllProperties: true));

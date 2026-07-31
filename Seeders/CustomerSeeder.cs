@@ -25,7 +25,7 @@ public static class CustomerSeeder
                     {
                         FirstName = "Edgar",
                         LastName = "Eldy",
-                        Tel = "87568899",
+                        Telephone = "87568899",
                         Email = "edgareldy@mailnator.com",
                         Address = "New York",
                         CreatedAt = DateTime.UtcNow,
@@ -35,7 +35,7 @@ public static class CustomerSeeder
                     {
                         FirstName = "John",
                         LastName = "Travolta",
-                        Tel = "53446477",
+                        Telephone = "53446477",
                         Email = "johntravolta@mailnator.com",
                         Address = "Los Angeles",
                         CreatedAt = DateTime.UtcNow,
