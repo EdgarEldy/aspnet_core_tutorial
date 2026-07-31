@@ -32,7 +32,7 @@ public class ProductsControllerIntegrationTests
     [Fact]
     public async Task Index_Returns_200_And_Contains_Seeded_Product()
     {
-        using var client = _factory.CreateTestClient();
+        using var client = await _factory.CreateAdminAuthenticatedClientAsync();
 
         var response = await client.GetAsync("/Products");
         var body = await response.Content.ReadAsStringAsync();
@@ -46,7 +46,7 @@ public class ProductsControllerIntegrationTests
     [Fact]
     public async Task Create_Get_Returns_Form_With_Antiforgery_Token_And_Category_Dropdown()
     {
-        using var client = _factory.CreateTestClient();
+        using var client = await _factory.CreateAdminAuthenticatedClientAsync();
 
         var response = await client.GetAsync("/Products/Create");
         var body = await response.Content.ReadAsStringAsync();
@@ -59,7 +59,7 @@ public class ProductsControllerIntegrationTests
     [Fact]
     public async Task Create_Post_With_Valid_Token_Creates_Product_And_Redirects_To_Index()
     {
-        using var client = _factory.CreateTestClient();
+        using var client = await _factory.CreateAdminAuthenticatedClientAsync();
         var categoryId = await CreateCategoryAsync(client);
         var productName = $"Product-{Guid.NewGuid():N}";
 
@@ -76,7 +76,7 @@ public class ProductsControllerIntegrationTests
     [Fact]
     public async Task Create_Post_Without_Antiforgery_Token_Returns_400()
     {
-        using var client = _factory.CreateTestClient();
+        using var client = await _factory.CreateAdminAuthenticatedClientAsync();
         var categoryId = await CreateCategoryAsync(client);
 
         var response = await client.PostAsync("/Products/Create", new FormUrlEncodedContent(new Dictionary<string, string>
@@ -92,7 +92,7 @@ public class ProductsControllerIntegrationTests
     [Fact]
     public async Task Edit_Get_Returns_200_For_Existing_Product()
     {
-        using var client = _factory.CreateTestClient();
+        using var client = await _factory.CreateAdminAuthenticatedClientAsync();
         var categoryId = await CreateCategoryAsync(client);
         var productName = $"Product-{Guid.NewGuid():N}";
         await CreateProductAsync(client, categoryId, productName, unitPrice: "999");
@@ -108,7 +108,7 @@ public class ProductsControllerIntegrationTests
     [Fact]
     public async Task Edit_Get_Returns_404_When_Product_Not_Found()
     {
-        using var client = _factory.CreateTestClient();
+        using var client = await _factory.CreateAdminAuthenticatedClientAsync();
 
         var response = await client.GetAsync("/Products/Edit/999999");
 
@@ -118,7 +118,7 @@ public class ProductsControllerIntegrationTests
     [Fact]
     public async Task Edit_Post_Updates_Product_And_Redirects_To_Index()
     {
-        using var client = _factory.CreateTestClient();
+        using var client = await _factory.CreateAdminAuthenticatedClientAsync();
         var categoryId = await CreateCategoryAsync(client);
         var originalName = $"Product-{Guid.NewGuid():N}";
         var updatedName = $"Product-{Guid.NewGuid():N}";
@@ -153,7 +153,7 @@ public class ProductsControllerIntegrationTests
         // modified and overwriting it with the CLR default (0001-01-01). This asserts the real,
         // persisted row in the Testcontainer's Postgres database, not just the HTTP response, so
         // it exercises the actual round-trip through the fixed Edit action.
-        using var client = _factory.CreateTestClient();
+        using var client = await _factory.CreateAdminAuthenticatedClientAsync();
         var categoryId = await CreateCategoryAsync(client);
         var productName = $"Product-{Guid.NewGuid():N}";
         await CreateProductAsync(client, categoryId, productName, unitPrice: "100");
@@ -197,7 +197,7 @@ public class ProductsControllerIntegrationTests
     [Fact]
     public async Task Delete_Get_Returns_Confirmation_Page_For_Existing_Product()
     {
-        using var client = _factory.CreateTestClient();
+        using var client = await _factory.CreateAdminAuthenticatedClientAsync();
         var categoryId = await CreateCategoryAsync(client);
         var productName = $"Product-{Guid.NewGuid():N}";
         await CreateProductAsync(client, categoryId, productName, unitPrice: "250");
@@ -213,7 +213,7 @@ public class ProductsControllerIntegrationTests
     [Fact]
     public async Task Delete_Post_Removes_Product_And_Redirects_To_Index()
     {
-        using var client = _factory.CreateTestClient();
+        using var client = await _factory.CreateAdminAuthenticatedClientAsync();
         var categoryId = await CreateCategoryAsync(client);
         var productName = $"Product-{Guid.NewGuid():N}";
         await CreateProductAsync(client, categoryId, productName, unitPrice: "300");
@@ -242,7 +242,7 @@ public class ProductsControllerIntegrationTests
     [Fact]
     public async Task Index_SearchString_Filters_To_Matching_Products_Only()
     {
-        using var client = _factory.CreateTestClient();
+        using var client = await _factory.CreateAdminAuthenticatedClientAsync();
         var categoryId = await CreateCategoryAsync(client);
         var uniqueMarker = $"Findable-{Guid.NewGuid():N}";
         var matching = $"{uniqueMarker}-A";
@@ -260,7 +260,7 @@ public class ProductsControllerIntegrationTests
     [Fact]
     public async Task Index_Pagination_Splits_Results_Across_Pages()
     {
-        using var client = _factory.CreateTestClient();
+        using var client = await _factory.CreateAdminAuthenticatedClientAsync();
         var categoryId = await CreateCategoryAsync(client);
         var uniqueMarker = $"PgTest{Guid.NewGuid():N}";
 
