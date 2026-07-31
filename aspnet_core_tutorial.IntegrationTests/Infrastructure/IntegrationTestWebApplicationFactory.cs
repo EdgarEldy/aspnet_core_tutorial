@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -25,6 +26,16 @@ namespace aspnet_core_tutorial.IntegrationTests.Infrastructure;
 /// </remarks>
 public class IntegrationTestWebApplicationFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
+    /// <summary>
+    /// Credentials injected into the test host's configuration below, under the same
+    /// "Admin:Email"/"Admin:Password" keys <c>RoleSeeder.SeedAsync</c> (invoked unmodified from
+    /// Program.cs at host startup) already reads in production. This seeds a real Admin account
+    /// once per test run through the app's own seeding code rather than duplicating that logic
+    /// here; integration tests log in as this account via <see cref="AuthenticationTestHelper"/>.
+    /// </summary>
+    public const string SeededAdminEmail = "admin.tests@example.com";
+    public const string SeededAdminPassword = "Adm1n!Test#Pass1";
+
     private readonly PostgreSqlContainer _dbContainer = new PostgreSqlBuilder("postgres:16")
         .WithDatabase("aspnet_core_tutorial_test")
         .WithUsername("test_user")
@@ -33,6 +44,19 @@ public class IntegrationTestWebApplicationFactory : WebApplicationFactory<Progra
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
+        // Applied before builder.Build() runs (same timing WebApplicationFactory already
+        // guarantees for the ConfigureServices overrides below), so RoleSeeder.SeedAsync sees
+        // these values via IConfiguration and seeds the Admin account exactly as it would in a
+        // real deployment with ADMIN_EMAIL/ADMIN_PASSWORD set.
+        builder.ConfigureAppConfiguration((_, configBuilder) =>
+        {
+            configBuilder.AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Admin:Email"] = SeededAdminEmail,
+                ["Admin:Password"] = SeededAdminPassword
+            });
+        });
+
         builder.ConfigureServices(services =>
         {
             // Program.cs registers ApplicationDbContext and the "postgresql" health check
