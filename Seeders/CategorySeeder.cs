@@ -24,14 +24,14 @@ namespace aspnet_core_tutorial.Seeders
                         new Category
                         {
                             CategoryName = "Lemonades",
-                            CreatedAt = DateTime.Now,
-                            UpdatedAt = DateTime.Now
+                            CreatedAt = DateTime.UtcNow,
+                            UpdatedAt = DateTime.UtcNow
                         },
                         new Category()
                         {
                             CategoryName = "Alcohols",
-                            CreatedAt = DateTime.Now,
-                            UpdatedAt = DateTime.Now
+                            CreatedAt = DateTime.UtcNow,
+                            UpdatedAt = DateTime.UtcNow
                         });
 
                     context.SaveChanges();

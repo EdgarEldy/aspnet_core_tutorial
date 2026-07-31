@@ -26,16 +26,16 @@ public static class ProductSeeder
                         CategoryId = 1,
                         ProductName = "Citron",
                         UnitPrice = 800,
-                        CreatedAt = DateTime.Now,
-                        UpdatedAt = DateTime.Now
+                        CreatedAt = DateTime.UtcNow,
+                        UpdatedAt = DateTime.UtcNow
                     },
                     new Product()
                     {
                         CategoryId = 2,
                         ProductName = "Amstel",
                         UnitPrice = 2500,
-                        CreatedAt = DateTime.Now,
-                        UpdatedAt = DateTime.Now
+                        CreatedAt = DateTime.UtcNow,
+                        UpdatedAt = DateTime.UtcNow
                     });
 
                 context.SaveChanges();
