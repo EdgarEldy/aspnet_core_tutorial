@@ -3,11 +3,14 @@ using System.Linq;
 using System.Threading.Tasks;
 using aspnet_core_tutorial.Data;
 using aspnet_core_tutorial.Models;
+using aspnet_core_tutorial.Seeders;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace aspnet_core_tutorial.Controllers
 {
+    [Authorize(Roles = RoleSeeder.Admin)]
     public class CategoriesController : Controller
     {
         private const int PageSize = 10;
@@ -21,6 +24,7 @@ namespace aspnet_core_tutorial.Controllers
         }
 
         // GET: Categories
+        [AllowAnonymous]
         public async Task<IActionResult> Index(string? searchString, int pageNumber = 1)
         {
             var categories = _context.Categories.AsNoTracking().AsQueryable();

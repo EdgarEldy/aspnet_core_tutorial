@@ -32,7 +32,7 @@ public class CustomersControllerIntegrationTests
     [Fact]
     public async Task Index_Returns_200_And_Contains_Seeded_Customer()
     {
-        using var client = _factory.CreateTestClient();
+        using var client = await _factory.CreateAdminAuthenticatedClientAsync();
 
         var response = await client.GetAsync("/Customers");
         var body = await response.Content.ReadAsStringAsync();
@@ -46,7 +46,7 @@ public class CustomersControllerIntegrationTests
     [Fact]
     public async Task Create_Get_Returns_Form_With_Antiforgery_Token()
     {
-        using var client = _factory.CreateTestClient();
+        using var client = await _factory.CreateAdminAuthenticatedClientAsync();
 
         var response = await client.GetAsync("/Customers/Create");
         var body = await response.Content.ReadAsStringAsync();
@@ -58,7 +58,7 @@ public class CustomersControllerIntegrationTests
     [Fact]
     public async Task Create_Post_With_Valid_Token_Creates_Customer_And_Redirects_To_Index()
     {
-        using var client = _factory.CreateTestClient();
+        using var client = await _factory.CreateAdminAuthenticatedClientAsync();
         var lastName = $"Customer-{Guid.NewGuid():N}";
 
         var response = await CreateCustomerAsync(client, lastName);
@@ -74,7 +74,7 @@ public class CustomersControllerIntegrationTests
     [Fact]
     public async Task Create_Post_Without_Antiforgery_Token_Returns_400()
     {
-        using var client = _factory.CreateTestClient();
+        using var client = await _factory.CreateAdminAuthenticatedClientAsync();
 
         var response = await client.PostAsync("/Customers/Create", new FormUrlEncodedContent(new Dictionary<string, string>
         {
@@ -91,7 +91,7 @@ public class CustomersControllerIntegrationTests
     [Fact]
     public async Task Edit_Get_Returns_200_For_Existing_Customer()
     {
-        using var client = _factory.CreateTestClient();
+        using var client = await _factory.CreateAdminAuthenticatedClientAsync();
         var lastName = $"Customer-{Guid.NewGuid():N}";
         await CreateCustomerAsync(client, lastName);
         var id = await FindCustomerIdAsync(client, lastName);
@@ -106,7 +106,7 @@ public class CustomersControllerIntegrationTests
     [Fact]
     public async Task Edit_Get_Returns_404_When_Customer_Not_Found()
     {
-        using var client = _factory.CreateTestClient();
+        using var client = await _factory.CreateAdminAuthenticatedClientAsync();
 
         var response = await client.GetAsync("/Customers/Edit/999999");
 
@@ -116,7 +116,7 @@ public class CustomersControllerIntegrationTests
     [Fact]
     public async Task Edit_Post_Updates_Customer_And_Redirects_To_Index()
     {
-        using var client = _factory.CreateTestClient();
+        using var client = await _factory.CreateAdminAuthenticatedClientAsync();
         var originalLastName = $"Customer-{Guid.NewGuid():N}";
         var updatedLastName = $"Customer-{Guid.NewGuid():N}";
         await CreateCustomerAsync(client, originalLastName);
@@ -151,7 +151,7 @@ public class CustomersControllerIntegrationTests
         // fetches the tracked entity and patches fields individually instead of attaching the
         // partially-bound model, so CreatedAt survives an edit while UpdatedAt moves forward.
         // Asserts the real, persisted row in the Testcontainer's Postgres database.
-        using var client = _factory.CreateTestClient();
+        using var client = await _factory.CreateAdminAuthenticatedClientAsync();
         var originalLastName = $"Customer-{Guid.NewGuid():N}";
         await CreateCustomerAsync(client, originalLastName);
         var id = await FindCustomerIdAsync(client, originalLastName);
@@ -196,7 +196,7 @@ public class CustomersControllerIntegrationTests
     [Fact]
     public async Task Delete_Get_Returns_Confirmation_Page_For_Existing_Customer()
     {
-        using var client = _factory.CreateTestClient();
+        using var client = await _factory.CreateAdminAuthenticatedClientAsync();
         var lastName = $"Customer-{Guid.NewGuid():N}";
         await CreateCustomerAsync(client, lastName);
         var id = await FindCustomerIdAsync(client, lastName);
@@ -211,7 +211,7 @@ public class CustomersControllerIntegrationTests
     [Fact]
     public async Task Delete_Post_Removes_Customer_And_Redirects_To_Index()
     {
-        using var client = _factory.CreateTestClient();
+        using var client = await _factory.CreateAdminAuthenticatedClientAsync();
         var lastName = $"Customer-{Guid.NewGuid():N}";
         await CreateCustomerAsync(client, lastName);
         var id = await FindCustomerIdAsync(client, lastName);
@@ -239,7 +239,7 @@ public class CustomersControllerIntegrationTests
     [Fact]
     public async Task Index_SearchString_Filters_To_Matching_Customers_Only()
     {
-        using var client = _factory.CreateTestClient();
+        using var client = await _factory.CreateAdminAuthenticatedClientAsync();
         var uniqueMarker = $"Findable-{Guid.NewGuid():N}";
         var matching = $"{uniqueMarker}-A";
         var nonMatching = $"Other-{Guid.NewGuid():N}";
@@ -256,7 +256,7 @@ public class CustomersControllerIntegrationTests
     [Fact]
     public async Task Index_Pagination_Splits_Results_Across_Pages()
     {
-        using var client = _factory.CreateTestClient();
+        using var client = await _factory.CreateAdminAuthenticatedClientAsync();
         var uniqueMarker = $"PgTest{Guid.NewGuid():N}";
 
         // PageSize is 10 on CustomersController; 12 uniquely-searchable customers guarantee a

@@ -4,7 +4,10 @@
     <div class="panel panel-default">
         <div class="panel-heading">Product categories</div>
         <div class="panel-body">
-            <a asp-controller="Categories" asp-action="Create" class="btn btn-primary">New</a>
+            @if (User.IsInRole(RoleSeeder.Admin))
+            {
+                <a asp-controller="Categories" asp-action="Create" class="btn btn-primary">New</a>
+            }
             <form asp-action="Index" method="get" class="form-inline" style="display:inline-block; margin-left: 10px;">
                 <input type="text" name="searchString" value="@ViewData["CurrentFilter"]"
                        class="form-control" placeholder="Search by category name" />
@@ -25,10 +28,13 @@
                         <td>@Html.DisplayFor(modelItem => item.Id)</td>
                         <td>@Html.DisplayFor(modelItem => item.CategoryName)</td>
                         <td>
-                            <div class="card-footer">
-                                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-primary">Edit</a>
-                                <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-danger">Delete</a>
-                            </div>
+                            @if (User.IsInRole(RoleSeeder.Admin))
+                            {
+                                <div class="card-footer">
+                                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-primary">Edit</a>
+                                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-danger">Delete</a>
+                                </div>
+                            }
                         </td>
                     </tr>
                 }

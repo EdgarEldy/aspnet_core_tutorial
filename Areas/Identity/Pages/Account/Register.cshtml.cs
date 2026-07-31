@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
+using aspnet_core_tutorial.Seeders;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
@@ -71,6 +72,10 @@ namespace aspnet_core_tutorial.Areas.Identity.Pages.Account
                 if (result.Succeeded)
                 {
                     _logger.LogInformation("User created a new account with password.");
+
+                    // Every self-registered account gets the baseline "User" role; only accounts
+                    // seeded or promoted separately (see RoleSeeder) hold "Admin".
+                    await _userManager.AddToRoleAsync(user, RoleSeeder.User);
 
                     var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
                     var callbackUrl = Url.Page(

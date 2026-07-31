@@ -23,6 +23,7 @@ Repository: https://github.com/EdgarEldy/aspnet_core_tutorial
 - [feature/products](#featureproducts)
 - [feature/customers](#featurecustomers)
 - [feature/orders](#featureorders)
+- [feature/auth](#featureauth)
 - [Roadmap](#roadmap)
 - [Getting started](#getting-started)
 - [Further reading](#further-reading)
@@ -124,7 +125,7 @@ ASP.NET Core Identity adds its own schema alongside these tables (`AspNetUsers`,
 | `feature/products` | `Category` and `Product` CRUD, built on `feature/core-architecture`. The former `feature/categories` branch was merged into it and retired: its pre-migration history never diverged from `feature/products`, so keeping both was redundant. |
 | `feature/customers` | `Customer` CRUD, built on `feature/products` per the plan's chained-branch topology. Its schema was aligned to the project's canonical `customers` table (dropped an unplanned `Pays`/country column, renamed `Tel` to `Telephone`). |
 | `feature/orders` | `Order` CRUD, built on `feature/customers` per the plan's chained-branch topology. |
-| `feature/auth` | Pre-migration tutorial branch, base of the original branch history (ASP.NET Core Identity wiring). |
+| `feature/auth` | Role-based authorization, built on `develop` once `feature/customers`/`feature/orders` merged. The original pre-migration `feature/auth` branch (base of the branch history, ASP.NET Core Identity wiring) was already fully absorbed into `develop` before this work started. |
 
 See `MIGRATION_LOG.md` for the full branch dependency graph, the merge order used to reconcile
 pre-migration branches with the .NET 10 / PostgreSQL base, and how that analysis was actually
@@ -337,6 +338,46 @@ once confirmed fully redundant.
   like the existing dropdown-population pattern already used for Categories/Products, so it
   follows the same convention as every other read-only action in this codebase.
 
+## feature/auth
+
+Role-based authorization on top of the already-merged `Categories`/`Products`/`Customers`/`Orders`
+CRUD, built on `develop` (needed all four controllers to exist to protect them).
+
+### Tasks
+
+- [x] Enabled ASP.NET Core Identity role support (`AddRoles<IdentityRole>()`); `ApplicationDbContext`
+  already inherited the Identity role tables, so no new migration was needed
+- [x] `RoleSeeder`: always ensures "Admin"/"User" roles exist; seeds a configured Admin account
+  (`Admin:Email`/`Admin:Password`) if present, skips otherwise rather than hardcoding a fallback
+- [x] `[Authorize(Roles = "Admin")]` on all four controllers: `Categories`/`Products` keep `Index`
+  `[AllowAnonymous]` (a public catalog); `Customers`/`Orders` are fully protected, including
+  `Index`, since they expose personally identifiable information
+- [x] Self-registered accounts are assigned the "User" role automatically; only `RoleSeeder` (via
+  configuration) can ever grant "Admin" - no code path lets a self-registered account become Admin
+- [x] Added the missing `AccessDenied` Razor Page (the cookie config already pointed at it, but the
+  page itself didn't exist, so an authenticated non-Admin would have 404'd)
+- [x] Wired the real Login/Register/Logout partial into the main app's nav (it already existed,
+  scaffolded, but was never included outside the separate Identity-area layout)
+- [x] Hid Create/Edit/Delete links from non-Admin visitors on the public Categories/Products
+  listings (server-side authorization already blocked the actions; this closes the matching UX gap)
+- [x] Etape 4/5 test coverage: 4 unit tests (`RoleSeeder`, InMemory) plus 15 integration tests
+  exercising the real ASP.NET Core authorization middleware (anonymous vs `User` vs `Admin` against
+  both the public catalog and PII controllers), plus fixing the pre-existing Categories/Products/
+  Customers/Orders integration tests to authenticate as Admin now that they require it
+
+### Configuration notes
+
+- **`Admin:Email`/`Admin:Password` follow the same secret-handling convention as the Postgres
+  credentials**: empty placeholders in `appsettings.json`, real values only in the git-ignored
+  `.env`, mapped through `docker-compose.yml` via the `Admin__Email`/`Admin__Password` double-
+  underscore convention ASP.NET Core uses to bind environment variables onto nested config keys.
+- **Customers/Orders are fully gated, Categories/Products are not.** This is a deliberate asymmetry:
+  Customer/Order data is personal information (names, phone, email, address), while a product
+  catalog reads naturally as public. Both still require the Admin role to create/edit/delete.
+- **No self-registration path to Admin.** `Register.cshtml.cs` always assigns "User", never reads
+  a role from the form, and the only other place `AddToRoleAsync` is called with "Admin" is
+  `RoleSeeder`, gated behind server-side configuration the registration form never touches.
+
 ## Roadmap
 
 The .NET 10 / PostgreSQL migration and the initial technical foundation are done. This section
@@ -369,8 +410,8 @@ plan's Etape 7, to match the sibling `spring-boot-tutorial` project's structure)
 - [x] Full CRUD over HTTP for `Products`, `Categories`, `Customers`, and `Orders`, with the real
   antiforgery token
 - [x] Authentication redirects (`/Identity/Account/Manage` -> `/Identity/Account/Login` when
-  signed out; `Categories`/`Products` carry no `[Authorize]` yet, so there's no business-CRUD
-  redirect case to test until that lands)
+  signed out) and role-based authorization redirects (anonymous -> Login, wrong role ->
+  AccessDenied) across all four business-CRUD controllers (see `feature/auth`)
 - [x] EF Core migrations apply automatically at container startup
 
 ### Etape 6 - CI completion
@@ -386,6 +427,8 @@ plan's Etape 7, to match the sibling `spring-boot-tutorial` project's structure)
 - [ ] Stronger Data Annotations on `Category`/`Product`/`Customer`/`Order`, surfaced in Razor views
 - [x] Pagination on `Products`/`Categories`/`Customers`/`Orders` lists (see `feature/products`,
   `feature/customers`, `feature/orders`)
+- [x] Role-based authorization (Admin/User) on all four CRUD controllers, public catalog reads vs.
+  protected writes and PII (see `feature/auth`)
 - [ ] Rate limiting, security headers (`X-Content-Type-Options`, `Content-Security-Policy`),
   anti-forgery checks on every POST form
 - [ ] `dotnet list package --vulnerable` audit (local and/or CI)

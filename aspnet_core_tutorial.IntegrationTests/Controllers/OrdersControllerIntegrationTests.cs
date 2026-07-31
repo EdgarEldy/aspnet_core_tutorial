@@ -34,7 +34,7 @@ public class OrdersControllerIntegrationTests
     [Fact]
     public async Task Index_Returns_200_And_Contains_Seeded_Order_Customer()
     {
-        using var client = _factory.CreateTestClient();
+        using var client = await _factory.CreateAdminAuthenticatedClientAsync();
 
         var response = await client.GetAsync("/Orders");
         var body = await response.Content.ReadAsStringAsync();
@@ -48,7 +48,7 @@ public class OrdersControllerIntegrationTests
     [Fact]
     public async Task Create_Get_Returns_Form_With_Antiforgery_Token_And_Customer_And_Product_Dropdowns()
     {
-        using var client = _factory.CreateTestClient();
+        using var client = await _factory.CreateAdminAuthenticatedClientAsync();
 
         var response = await client.GetAsync("/Orders/Create");
         var body = await response.Content.ReadAsStringAsync();
@@ -61,7 +61,7 @@ public class OrdersControllerIntegrationTests
     [Fact]
     public async Task Create_Post_With_Valid_Token_Creates_Order_Computes_Total_And_Redirects_To_Index()
     {
-        using var client = _factory.CreateTestClient();
+        using var client = await _factory.CreateAdminAuthenticatedClientAsync();
         var customerId = await CreateCustomerAsync(client);
         var (productId, productName) = await CreateProductAsync(client, unitPrice: "100");
 
@@ -81,7 +81,7 @@ public class OrdersControllerIntegrationTests
     [Fact]
     public async Task Create_Post_Without_Antiforgery_Token_Returns_400()
     {
-        using var client = _factory.CreateTestClient();
+        using var client = await _factory.CreateAdminAuthenticatedClientAsync();
         var customerId = await CreateCustomerAsync(client);
         var (productId, _) = await CreateProductAsync(client, unitPrice: "100");
 
@@ -98,7 +98,7 @@ public class OrdersControllerIntegrationTests
     [Fact]
     public async Task Create_Post_Without_Customer_Returns_200_With_Validation_Error_And_Does_Not_Create_Order()
     {
-        using var client = _factory.CreateTestClient();
+        using var client = await _factory.CreateAdminAuthenticatedClientAsync();
         var (productId, _) = await CreateProductAsync(client, unitPrice: "100");
 
         var getResponse = await client.GetAsync("/Orders/Create");
@@ -128,7 +128,7 @@ public class OrdersControllerIntegrationTests
     [Fact]
     public async Task Create_Post_Without_Product_Returns_200_With_Validation_Error()
     {
-        using var client = _factory.CreateTestClient();
+        using var client = await _factory.CreateAdminAuthenticatedClientAsync();
         var customerId = await CreateCustomerAsync(client);
 
         var getResponse = await client.GetAsync("/Orders/Create");
@@ -150,7 +150,7 @@ public class OrdersControllerIntegrationTests
     [Fact]
     public async Task Create_Post_With_Zero_Quantity_Returns_200_With_Validation_Error()
     {
-        using var client = _factory.CreateTestClient();
+        using var client = await _factory.CreateAdminAuthenticatedClientAsync();
         var customerId = await CreateCustomerAsync(client);
         var (productId, _) = await CreateProductAsync(client, unitPrice: "100");
 
@@ -174,7 +174,7 @@ public class OrdersControllerIntegrationTests
     [Fact]
     public async Task Edit_Get_Returns_200_For_Existing_Order()
     {
-        using var client = _factory.CreateTestClient();
+        using var client = await _factory.CreateAdminAuthenticatedClientAsync();
         var customerId = await CreateCustomerAsync(client);
         var (productId, productName) = await CreateProductAsync(client, unitPrice: "100");
         await CreateOrderAsync(client, customerId, productId, quantity: "2");
@@ -190,7 +190,7 @@ public class OrdersControllerIntegrationTests
     [Fact]
     public async Task Edit_Get_Returns_404_When_Order_Not_Found()
     {
-        using var client = _factory.CreateTestClient();
+        using var client = await _factory.CreateAdminAuthenticatedClientAsync();
 
         var response = await client.GetAsync("/Orders/Edit/999999");
 
@@ -200,7 +200,7 @@ public class OrdersControllerIntegrationTests
     [Fact]
     public async Task Edit_Post_Updates_Order_Recomputes_Total_And_Redirects_To_Index()
     {
-        using var client = _factory.CreateTestClient();
+        using var client = await _factory.CreateAdminAuthenticatedClientAsync();
         var customerId = await CreateCustomerAsync(client);
         var (productId, productName) = await CreateProductAsync(client, unitPrice: "100");
         await CreateOrderAsync(client, customerId, productId, quantity: "2");
@@ -234,7 +234,7 @@ public class OrdersControllerIntegrationTests
         // Customers: Edit fetches the tracked entity and patches fields individually instead of
         // attaching the partially-bound model, so CreatedAt survives an edit while UpdatedAt moves
         // forward. Asserts the real, persisted row in the Testcontainer's Postgres database.
-        using var client = _factory.CreateTestClient();
+        using var client = await _factory.CreateAdminAuthenticatedClientAsync();
         var customerId = await CreateCustomerAsync(client);
         var (productId, productName) = await CreateProductAsync(client, unitPrice: "100");
         await CreateOrderAsync(client, customerId, productId, quantity: "2");
@@ -278,7 +278,7 @@ public class OrdersControllerIntegrationTests
     [Fact]
     public async Task Delete_Get_Returns_Confirmation_Page_For_Existing_Order()
     {
-        using var client = _factory.CreateTestClient();
+        using var client = await _factory.CreateAdminAuthenticatedClientAsync();
         var customerId = await CreateCustomerAsync(client);
         var (productId, productName) = await CreateProductAsync(client, unitPrice: "100");
         await CreateOrderAsync(client, customerId, productId, quantity: "2");
@@ -294,7 +294,7 @@ public class OrdersControllerIntegrationTests
     [Fact]
     public async Task Delete_Post_Removes_Order_And_Redirects_To_Index()
     {
-        using var client = _factory.CreateTestClient();
+        using var client = await _factory.CreateAdminAuthenticatedClientAsync();
         var customerId = await CreateCustomerAsync(client);
         var (productId, productName) = await CreateProductAsync(client, unitPrice: "100");
         await CreateOrderAsync(client, customerId, productId, quantity: "2");
@@ -323,7 +323,7 @@ public class OrdersControllerIntegrationTests
     [Fact]
     public async Task DeleteConfirmed_Redirects_Without_Throwing_When_Order_Already_Gone()
     {
-        using var client = _factory.CreateTestClient();
+        using var client = await _factory.CreateAdminAuthenticatedClientAsync();
         var deleteToken = await GetDeleteTokenForAnyOrderAsync(client);
 
         var response = await client.PostAsync("/Orders/Delete", new FormUrlEncodedContent(new Dictionary<string, string>
@@ -338,7 +338,7 @@ public class OrdersControllerIntegrationTests
     [Fact]
     public async Task Index_SearchString_Filters_By_Customer_Last_Name()
     {
-        using var client = _factory.CreateTestClient();
+        using var client = await _factory.CreateAdminAuthenticatedClientAsync();
         var (productId, _) = await CreateProductAsync(client, unitPrice: "50");
         var matchingLastName = $"Findable-{Guid.NewGuid():N}";
         var matchingCustomerId = await CreateCustomerAsync(client, matchingLastName);
@@ -355,7 +355,7 @@ public class OrdersControllerIntegrationTests
     [Fact]
     public async Task Index_SearchString_Filters_By_Product_Name()
     {
-        using var client = _factory.CreateTestClient();
+        using var client = await _factory.CreateAdminAuthenticatedClientAsync();
         var customerId = await CreateCustomerAsync(client);
         var uniqueMarker = $"Findable-{Guid.NewGuid():N}";
         var (matchingProductId, matchingProductName) = await CreateProductAsync(client, unitPrice: "50", productNamePrefix: uniqueMarker);
@@ -373,7 +373,7 @@ public class OrdersControllerIntegrationTests
     [Fact]
     public async Task Index_Pagination_Splits_Results_Across_Pages()
     {
-        using var client = _factory.CreateTestClient();
+        using var client = await _factory.CreateAdminAuthenticatedClientAsync();
         var customerId = await CreateCustomerAsync(client);
         var uniqueMarker = $"PgTest{Guid.NewGuid():N}";
 
@@ -398,7 +398,7 @@ public class OrdersControllerIntegrationTests
     [Fact]
     public async Task GetProducts_Returns_Only_Products_In_The_Given_Category()
     {
-        using var client = _factory.CreateTestClient();
+        using var client = await _factory.CreateAdminAuthenticatedClientAsync();
         var categoryAId = await CreateCategoryAsync(client);
         var categoryBId = await CreateCategoryAsync(client);
         var (_, matchingProductName) = await CreateProductAsync(client, unitPrice: "50", categoryId: categoryAId);
