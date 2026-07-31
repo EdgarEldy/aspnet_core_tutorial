@@ -127,6 +127,7 @@ app.MapRazorPages();
 app.MapHealthChecks("/health");
 
 // Seeders goes here..
+await RoleSeeder.SeedAsync(app);
 CategorySeeder.Seed(app);
 ProductSeeder.Seed(app);
 CustomerSeeder.Seed(app);
