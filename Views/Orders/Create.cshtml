@@ -1,0 +1,40 @@
+@model aspnet_core_tutorial.Models.Order
+
+@{
+    Layout = "~/Views/Layouts/_Default.cshtml";
+}
+<div class="col-lg-12">
+    <div class="panel panel-default">
+        <div class="panel-heading">Add an order</div>
+        <div class="panel-body">
+            <div class="col-md-6">
+                <form asp-action="Create">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    <div class="form-group">
+                        <label class="control-label">Customer</label>
+                        <select asp-for="CustomerId" class="form-control" asp-items="ViewBag.CustomerId">
+                            <option value="">-- Select a customer --</option>
+                        </select>
+                        <span asp-validation-for="CustomerId" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label">Product</label>
+                        <select asp-for="ProductId" class="form-control" asp-items="ViewBag.ProductId">
+                            <option value="">-- Select a product --</option>
+                        </select>
+                        <span asp-validation-for="ProductId" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label">Quantity</label>
+                        <input asp-for="Quantity" class="form-control" />
+                        <span asp-validation-for="Quantity" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" id="submit" class="btn btn-primary">Save</button>
+                        <button type="reset" class="btn btn-default">Reset</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div><!-- /.col-->
